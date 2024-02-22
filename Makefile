@@ -29,8 +29,8 @@ GUIFLAG = -D _ENABLE_GUI_
 
 # For graphics interface, choose GLUT or GLFW GUI libraries
 # GLUT is well known, but GLFW is better for newer Mac's hires displays
-GLUT_OR_GLFW = _USE_GLFW_
-#GLUT_OR_GLFW = _USE_GLUT_
+#GLUT_OR_GLFW = _USE_GLFW_
+GLUT_OR_GLFW = _USE_GLUT_
 
 SHADERFLAG = -D _USE_SHADERS_
 #SHADERFLAG =
