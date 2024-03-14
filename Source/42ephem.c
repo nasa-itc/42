@@ -414,6 +414,7 @@ void SplineToPosVel(struct OrbitType *O)
                   &newline);
                O->NodeDynTime[3] = DateToTime(NodeYear,NodeMonth,NodeDay,
                   NodeHour,NodeMin,NodeSec);
+               O->NodeDynTime[3] += DynTime-CivilTime; /* Adjust from UTC to TT */
                for(j=0;j<3;j++) {
                   O->NodePos[3][j] *= 1000.0;
                   O->NodeVel[3][j] *= 1000.0;
@@ -443,6 +444,7 @@ void SplineToPosVel(struct OrbitType *O)
             &O->ArgP,&O->anom,&O->tp,
             &O->SLR,&O->alpha,&O->rmin,
             &O->MeanMotion,&O->Period);
+         O->tp += SimTime;
       }
       else if (O->Regime == ORB_THREE_BODY) {
          MTxV(LagSys[O->Sys].CLN,x,xn);
@@ -496,14 +498,8 @@ void OrbitMotion(double Time)
                }
             }
             else if (O->Regime == ORB_CENTRAL) {
-               if (O->J2DriftEnabled) {
-                  O->RAAN = O->RAAN0 + O->RAANdot*(SimTime - 0.5/O->MeanMotion*sin(2.0*O->ArgP+2.0*O->anom));
-                  O->ArgP = O->ArgP0 + O->ArgPdot*SimTime;
-                  Eph2RV(O->MuPlusJ2,O->SLR,O->ecc,
-                         O->inc,O->RAAN,O->ArgP,
-                         Time-O->tp,
-                         O->PosN,O->VelN,&O->anom);
-               }
+               if (O->SplineActive) SplineToPosVel(O);
+               else if (O->J2DriftEnabled) MeanEph2RV(O,Time);
                else {
                   Eph2RV(O->mu,O->SLR,O->ecc,
                          O->inc,O->RAAN,O->ArgP,
@@ -577,6 +573,7 @@ void Ephemerides(void)
       double EMRAT = 81.30056907419062; /* Earth-Moon mass ratio */
       double PosJ[3],VelJ[3];
       double C_W_TETE[3][3],C_TEME_TETE[3][3],C_TETE_J2000[3][3];
+      double MagR1,MeanMotion;
 
 /* .. Locate Planets and Luna */
       if (EphemOption == EPH_MEAN) {
@@ -619,9 +616,10 @@ void Ephemerides(void)
             }
          }
       }
-      else if (EphemOption == EPH_DE430) {
+      else if (EphemOption == EPH_DE430 || EphemOption == EPH_DE440) {
          /* Update DE430 block if needed */
-         if (TT.JulDay > World[SOL].eph.Cheb[1].JD2) LoadDE430(ModelPath,TT.JulDay);
+         if (TT.JulDay > World[SOL].eph.Cheb[1].JD2) 
+            LoadJplEphems(ModelPath,TT.JulDay);
          for(Iw=SOL;Iw<=LUNA;Iw++) {
             W = &World[Iw];
             Eph = &W->eph;
@@ -791,17 +789,31 @@ void Ephemerides(void)
                FindENU(S->PosN,W->w,S->CLN,S->wln);
             }
             else if (O->Regime == ORB_CENTRAL) {
-               for(j=0;j<3;j++) {
-                  S->PosN[j] = O->PosN[j] + S->PosR[j];
-                  S->VelN[j] = O->VelN[j] + S->VelR[j];
+               if (S->OrbDOF == ORBDOF_COWELL) {
+                  for(j=0;j<3;j++) {
+                     S->PosR[j] = S->PosN[j] - O->PosN[j];
+                     S->VelR[j] = S->VelN[j] - O->VelN[j];
+                  }
+               }
+               else {
+                  for(j=0;j<3;j++) {
+                     S->PosN[j] = O->PosN[j] + S->PosR[j];
+                     S->VelN[j] = O->VelN[j] + S->VelR[j];
+                  }
                }
                FindCLN(S->PosN,S->VelN,S->CLN,S->wln);
+               RelRV2EHRV(O->SMA,O->MeanMotion,O->CLN,
+                  S->PosR,S->VelR,S->PosEH,S->VelEH);
             }
-            else {
+            else { /* ORB_THREE_BODY */
                for(j=0;j<3;j++) {
                   S->PosN[j] = O->PosN[j] + S->PosR[j];
                   S->VelN[j] = O->VelN[j] + S->VelR[j];
                }
+               MagR1 = MAGV(O->PosN);
+               MeanMotion = sqrt(O->mu1/(MagR1*MagR1*MagR1));
+               RelRV2EHRV(MagR1,MeanMotion,O->CLN,
+                  S->PosR,S->VelR,S->PosEH,S->VelEH);
                FindCLN(S->PosN,S->VelN,S->CLN,S->wln);
             }
 

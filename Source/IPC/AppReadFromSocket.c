@@ -26,11 +26,8 @@ void ReadFromSocket(SOCKET Socket, struct AcType *AC)
       long Year,doy,Hour,Minute;
       double Second;
       long Month,Day;
-      long MsgLen;
-
+      
       memset(Msg,'\0',16384);
-      MsgLen = 0;
-
       NumBytes = recv(Socket,Msg,16384,0);
       if (NumBytes <= 0) return; /* Bail out if no message */
 
@@ -416,6 +413,22 @@ void ReadFromSocket(SOCKET Socket, struct AcType *AC)
                }
             }
 
+            if (sscanf(line,"SC[%ld].AC.Pi = %le",
+               &Isc,
+               &DbleVal[0]) == 2) {
+               if (Isc == AC->ID) {
+                  AC->Pi = DbleVal[0];
+               }
+            }
+
+            if (sscanf(line,"SC[%ld].AC.TwoPi = %le",
+               &Isc,
+               &DbleVal[0]) == 2) {
+               if (Isc == AC->ID) {
+                  AC->TwoPi = DbleVal[0];
+               }
+            }
+
             if (sscanf(line,"SC[%ld].AC.DT = %le",
                &Isc,
                &DbleVal[0]) == 2) {
@@ -509,14 +522,6 @@ void ReadFromSocket(SOCKET Socket, struct AcType *AC)
                   AC->B[i].MOI[2][0] = DbleVal[6];
                   AC->B[i].MOI[2][1] = DbleVal[7];
                   AC->B[i].MOI[2][2] = DbleVal[8];
-               }
-            }
-
-            if (sscanf(line,"SC[%ld].AC.G[%ld].IsUnderActiveControl = %ld",
-               &Isc,&i,
-               &LongVal[0]) == 3) {
-               if (Isc == AC->ID) {
-                  AC->G[i].IsUnderActiveControl = LongVal[0];
                }
             }
 
@@ -856,6 +861,14 @@ void ReadFromSocket(SOCKET Socket, struct AcType *AC)
                }
             }
 
+            if (sscanf(line,"SC[%ld].AC.Whl[%ld].Body = %ld",
+               &Isc,&i,
+               &LongVal[0]) == 3) {
+               if (Isc == AC->ID) {
+                  AC->Whl[i].Body = LongVal[0];
+               }
+            }
+
             if (sscanf(line,"SC[%ld].AC.Whl[%ld].Axis = %le %le %le",
                &Isc,&i,
                &DbleVal[0],
@@ -933,6 +946,14 @@ void ReadFromSocket(SOCKET Socket, struct AcType *AC)
                &DbleVal[0]) == 3) {
                if (Isc == AC->ID) {
                   AC->MTB[i].Mmax = DbleVal[0];
+               }
+            }
+
+            if (sscanf(line,"SC[%ld].AC.Thr[%ld].Body = %ld",
+               &Isc,&i,
+               &LongVal[0]) == 3) {
+               if (Isc == AC->ID) {
+                  AC->Thr[i].Body = LongVal[0];
                }
             }
 

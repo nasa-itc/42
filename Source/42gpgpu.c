@@ -38,13 +38,15 @@ void InitAlbedo(void)
       GLenum Status;
       GLfloat Eye3x3[9] = {1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0};
       struct AlbedoFBOType *A;
-      GLuint Width = 256; /* Must be power of 2 */
+      GLuint Width = 64; /* Must be power of 2 */
       
       glutInitWindowSize(Width,Width);
       AlbedoWindow = glutCreateWindow("Albedo Workspace");
       glutSetWindow(AlbedoWindow);
       glViewport(0,0,Width,Width);
       glutDisplayFunc(NullDisplay);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_ONE,GL_ONE); 
 
 /* .. Create FBO */
       A = &AlbedoFBO;
@@ -52,23 +54,13 @@ void InitAlbedo(void)
       glBindFramebuffer(GL_FRAMEBUFFER,A->FrameTag);
       A->Height = Width;
       A->Width = Width;
-      A->Tex[0] = (float *) calloc(A->Height*A->Width*3,sizeof(float));
-      A->Tex[1] = (float *) calloc(A->Height*A->Width*3,sizeof(float));
+      A->Tex = (float *) calloc(A->Height*A->Width*3,sizeof(float));
 
       /* Create Textures */
-      glGenTextures(1,(GLuint *) &A->TexTag[0]);
-      glBindTexture(GL_TEXTURE_2D,A->TexTag[0]);
-      glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,A->Width,A->Height,0,
-         GL_RGB,GL_FLOAT,NULL);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-         
-      glGenTextures(1,(GLuint *) &A->TexTag[1]);
-      glBindTexture(GL_TEXTURE_2D,A->TexTag[1]);
-      glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,A->Width,A->Height,0,
-         GL_RGB,GL_FLOAT,NULL);
+      glGenTextures(1,(GLuint *) &A->TexTag);
+      glBindTexture(GL_TEXTURE_2D,A->TexTag);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,A->Width,A->Height,0,
+         GL_RGBA,GL_FLOAT,NULL);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -78,10 +70,9 @@ void InitAlbedo(void)
       glGenRenderbuffers(1,&A->RenderTag);
       glBindRenderbuffer(GL_RENDERBUFFER,A->RenderTag);
       glRenderbufferStorage(GL_RENDERBUFFER,
-         GL_RGB,A->Width,A->Height);
+         GL_RGBA,A->Width,A->Height);
 
-      //glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->RenderTag,0);
-      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->TexTag[0],0);
+      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->TexTag,0);
 
       Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
       if (Status != GL_FRAMEBUFFER_COMPLETE) {
@@ -109,23 +100,29 @@ void InitAlbedo(void)
          BuildShaderProgram(AlbedoVtxShader,AlbedoFragShader,"Albedo"); 
 
       glUseProgram(AlbedoShaderProgram);
-      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"Width");
-      glUniform1f(UniLoc,256.0);
-      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"UnitWorldVecF");
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"UnitWorldVecE");
       glUniform3f(UniLoc,0.0,0.0,1.0);
-      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"SunVecF");
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"SunVecE");
       glUniform3f(UniLoc,0.0,0.0,1.0);
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CosWorldAng");
+      glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CosFov");
       glUniform1f(UniLoc,0.0);
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"WorldRad");
       glUniform1f(UniLoc,0.0);      
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"PosEyeW");
       glUniform3f(UniLoc,0.0,0.0,0.0);
-      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CWF");
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CEF");
       glUniformMatrix3fv(UniLoc,1,1,Eye3x3);
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CWE");
+      glUniformMatrix3fv(UniLoc,1,1,Eye3x3);
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"TexWidth");
+      glUniform1f(UniLoc,64.0);
+
       ValidateShaderProgram(AlbedoShaderProgram,"Albedo");
 
       glUseProgram(0);
+      
 }
 /**********************************************************************/
 /* Significant contributions to this algorithm were made by           */
@@ -137,16 +134,17 @@ void FindAlbedo(struct SCType *S, struct CssType *CSS)
       struct WorldType *W;
       struct AlbedoFBOType *A;
       double CEB[3][3],CEN[3][3],CWE[3][3],PosEyeW[3],WorldVecN[3],WorldDist;
-      double UnitWorldVecE[3],UnitWorldVecF[3],CosWorldAng,CWF[3][3];
-      double SunVecE[3],SunVecF[3];
+      double UnitWorldVecE[3],CosWorldAng;
+      double SunVecE[3];
       float TexWidth;
       unsigned int AlbedoCubeTag;
       GLint UniLoc;
-      GLfloat CWFarray[9];
+      GLfloat CWEarray[9],CEFarray[9];
       long i,j,If;
-      //char PpmFileName[5][40] = {"CssPZ.ppm","CssPY.ppm","CssMY.ppm","CssPX.ppm","CssMX.ppm"};
       static long First = 1;
       
+      /* E is "eye" frame, F is "face" frame */
+      /* Faces are faces of a cube centered on Eye */
       double CEF[5][3][3] = {
          /* Ceiling */
          {{1.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,1.0}},
@@ -195,49 +193,56 @@ void FindAlbedo(struct SCType *S, struct CssType *CSS)
       glPushMatrix();
       glLoadIdentity();
    
+      glUseProgram(AlbedoShaderProgram);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_CUBE_MAP,AlbedoCubeTag);
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_CUBE_MAP,W->CloudGlossCubeTag);
 
-      glUseProgram(AlbedoShaderProgram);
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"UnitWorldVecE");
+      glUniform3f(UniLoc,UnitWorldVecE[0],UnitWorldVecE[1],UnitWorldVecE[2]);
 
-      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"TexWidth");
-      TexWidth = ((float) A->Width);
-      glUniform1f(UniLoc,TexWidth);
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"SunVecE");
+      glUniform3f(UniLoc,SunVecE[0],SunVecE[1],SunVecE[2]);
 
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CosWorldAng");
       glUniform1f(UniLoc,CosWorldAng);
+
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CosFov");
+      glUniform1f(UniLoc,CSS->CosFov);
 
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"WorldRad");
       glUniform1f(UniLoc,W->rad);      
 
       UniLoc = glGetUniformLocation(AlbedoShaderProgram,"PosEyeW");
       glUniform3f(UniLoc,PosEyeW[0],PosEyeW[1],PosEyeW[2]);
+      
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CWE");
+      for(i=0;i<3;i++) {
+        for(j=0;j<3;j++) CWEarray[3*i+j] = CWE[i][j];
+      }
+      glUniformMatrix3fv(UniLoc,1,1,CWEarray);
    
+      UniLoc = glGetUniformLocation(AlbedoShaderProgram,"TexWidth");
+      TexWidth = ((float) A->Width);
+      glUniform1f(UniLoc,TexWidth);
+
       glBindFramebuffer(GL_FRAMEBUFFER,A->FrameTag);
       glBindRenderbuffer(GL_RENDERBUFFER,A->RenderTag);
 
-      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->TexTag[0],0);
-      
+      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->TexTag,0);
+
+      /* Accumulate renders, read out only once */      
+      glClear(GL_COLOR_BUFFER_BIT); 
       for(If=0;If<5;If++) {
-         MTxV(CEF[If],UnitWorldVecE,UnitWorldVecF);
-         UniLoc = glGetUniformLocation(AlbedoShaderProgram,"UnitWorldVecF");
-         glUniform3f(UniLoc,UnitWorldVecF[0],UnitWorldVecF[1],UnitWorldVecF[2]);
-
-         MTxV(CEF[If],SunVecE,SunVecF);
-         UniLoc = glGetUniformLocation(AlbedoShaderProgram,"SunVecF");
-         glUniform3f(UniLoc,SunVecF[0],SunVecF[1],SunVecF[2]);
-
-         MxM(CWE,CEF[If],CWF);
-         UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CWF");
+         UniLoc = glGetUniformLocation(AlbedoShaderProgram,"CEF");
          for(i=0;i<3;i++) {
-           for(j=0;j<3;j++) CWFarray[3*i+j] = CWF[i][j];
+           for(j=0;j<3;j++) CEFarray[3*i+j] = CEF[If][i][j];
          }
-         glUniformMatrix3fv(UniLoc,1,1,CWFarray);
+         glUniformMatrix3fv(UniLoc,1,1,CEFarray);
 
          /* Draw to FBO */
-         glClear(GL_COLOR_BUFFER_BIT);  
          glBegin(GL_QUADS);
             glVertex3d(-1.0,-1.0,-1.0);
             glVertex3d( 1.0,-1.0,-1.0);
@@ -245,16 +250,17 @@ void FindAlbedo(struct SCType *S, struct CssType *CSS)
             glVertex3d(-1.0, 1.0,-1.0);
          glEnd();
          
-         /* Readout from FBO */
-			glReadPixels(0,0,A->Width,A->Height,GL_RGB,GL_FLOAT,A->Tex[0]);
-			//TexToPpm(InOutPath,PpmFileName[If],A->Height,A->Width,3,A->Tex[0]);
-         for(j=0;j<A->Height;j++) {
-            for(i=0;i<A->Width;i++) {
-               CSS->Albedo += A->Tex[0][3*(A->Width*j+i)]; /* Scaled in shader */
-            }
+      }
+      /* Readout from FBO */
+      /* glReadPixels is bottleneck.  To optimize, consider processing all CSS's */
+      /* at once, then have only one glReadPixels call to retrieve all Albedo */
+      glReadPixels(0,0,A->Width,A->Height,GL_RGBA,GL_FLOAT,A->Tex);
+      for(j=0;j<A->Height;j++) {
+         for(i=0;i<A->Width;i++) {
+            CSS->Albedo += A->Tex[4*(A->Width*j+i)]; /* Scaled in shader */
          }
       }
-      
+
       glBindRenderbuffer(GL_RENDERBUFFER,0);
       glBindFramebuffer(GL_FRAMEBUFFER,0);
       glUseProgram(0);
@@ -262,4 +268,6 @@ void FindAlbedo(struct SCType *S, struct CssType *CSS)
       glPopMatrix();
       glMatrixMode(GL_MODELVIEW);
       glPopMatrix();
+      
+      
 }

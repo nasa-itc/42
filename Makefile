@@ -27,11 +27,6 @@ endif
 GUIFLAG = -D _ENABLE_GUI_
 #GUIFLAG =
 
-# For graphics interface, choose GLUT or GLFW GUI libraries
-# GLUT is well known, but GLFW is better for newer Mac's hires displays
-#GLUT_OR_GLFW = _USE_GLFW_
-GLUT_OR_GLFW = _USE_GLUT_
-
 SHADERFLAG = -D _USE_SHADERS_
 #SHADERFLAG =
 
@@ -41,15 +36,17 @@ CFDFLAG =
 FFTBFLAG =
 #FFTBFLAG = -D _ENABLE_FFTB_CODE_
 
-#GSFCFLAG =
-GSFCFLAG = -D _USE_GSFC_WATERMARK_
+GSFCFLAG =
+#GSFCFLAG = -D _USE_GSFC_WATERMARK_
 
 STANDALONEFLAG =
 #STANDALONEFLAG = -D _AC_STANDALONE_
 
-
 GMSECFLAG =
 #GMSECFLAG = -D _ENABLE_GMSEC_
+
+RBTFLAG = 
+#RBTFLAG = -D _ENABLE_RBT_
 
 ifeq ($(strip $(GMSECFLAG)),)
    GMSECDIR =
@@ -76,17 +73,21 @@ INOUT = $(PROJDIR)InOut/
 GSFCSRC = $(PROJDIR)/GSFC/Source/
 IPCSRC = $(SRC)IPC/
 
-#EMBEDDED = -D EMBEDDED_MATLAB
-EMBEDDED =
 
 ifeq ($(42PLATFORM),__APPLE__)
    # Mac Macros
    CINC = -I /usr/include -I /usr/local/include
    EXTERNDIR =
    # ARCHFLAG = -arch i386
-   ARCHFLAG = -arch x86_64
+   # ARCHFLAG = -arch x86_64
+   ARCHFLAG = -arch arm64
+   # For graphics interface, choose GLUT or GLFW GUI libraries
+   # GLUT is well known, but GLFW is better for newer Mac's hires displays
+   # OSX fixed their hires GLUT issue.  Keep GLFW around just in case.
+   #GLUT_OR_GLFW = _USE_GLFW_
+   GLUT_OR_GLFW = _USE_GLUT_
 
-   LFLAGS = -bind_at_load
+   LFLAGS = 
    ifneq ($(strip $(GUIFLAG)),)
       GLINC = -I /System/Library/Frameworks/OpenGL.framework/Headers/ -I /System/Library/Frameworks/GLUT.framework/Headers/
       ifeq ($(strip $(GLUT_OR_GLFW)),_USE_GLUT_)
@@ -103,6 +104,7 @@ ifeq ($(42PLATFORM),__APPLE__)
       LIBS = 
       GUIOBJ = 
    endif
+   XWARN = 
    EXENAME = 42
    CC = gcc
 endif
@@ -112,18 +114,22 @@ ifeq ($(42PLATFORM),__linux__)
    CINC =
    EXTERNDIR =
    ARCHFLAG =
+   # For graphics interface, choose GLUT or GLFW GUI libraries
+   # GLUT is well known, but GLFW is better for newer Mac's hires displays
+   #GLUT_OR_GLFW = _USE_GLFW_
+   GLUT_OR_GLFW = _USE_GLUT_
 
    ifneq ($(strip $(GUIFLAG)),)
-      #GLINC = -I /usr/include/
-      GLINC = -I $(KITDIR)/include/GL/
       ifeq ($(strip $(GLUT_OR_GLFW)),_USE_GLUT_)
          GUIOBJ = $(OBJ)42gl.o $(OBJ)42glut.o $(OBJ)glkit.o $(OBJ)42gpgpu.o
          LIBS = -lglut -lGLU -lGL -ldl -lm -lpthread
+         GLINC = -I /usr/include/GL/
          LFLAGS = -L $(KITDIR)/GL/lib/
          GUI_LIB = -D _USE_GLUT_
       else
          GUIOBJ = $(OBJ)42gl.o $(OBJ)42glfw.o $(OBJ)glkit.o $(OBJ)42gpgpu.o
          LIBS = -lglfw -lglut -lGLU -lGL -ldl -lm -lpthread
+         GLINC = -I /usr/include/GL/ -I /usr/include/GLFW
          GUI_LIB = -D _USE_GLFW_
       endif
    else
@@ -132,6 +138,7 @@ ifeq ($(42PLATFORM),__linux__)
       LIBS = -ldl -lm -lpthread
       LFLAGS =
    endif
+   XWARN = -Wno-unused-variable -Wno-unused-but-set-variable -Wno-stringop-overread
    EXENAME = 42
    CC = gcc
 endif
@@ -139,6 +146,10 @@ endif
 ifeq ($(42PLATFORM),__MSYS__)
    CINC =
    EXTERNDIR = /c/42ExternalSupport/
+   # For graphics interface, choose GLUT or GLFW GUI libraries
+   # GLUT is well known, but GLFW is better for newer Mac's hires displays
+   #GLUT_OR_GLFW = _USE_GLFW_
+   GLUT_OR_GLFW = _USE_GLUT_
 
    ifneq ($(strip $(GUIFLAG)),)
       # TODO: Option to use GLFW instead of GLUT?
@@ -156,6 +167,7 @@ ifeq ($(42PLATFORM),__MSYS__)
       LFLAGS =
       ARCHFLAG =
    endif
+   XWARN = 
    EXENAME = 42.exe
    CC = gcc
 endif
@@ -185,6 +197,17 @@ else
    ACOBJ = $(OBJ)AcApp.o
 endif
 
+ifneq ($(strip $(RBTFLAG)),)
+   RBTDIR = $(PROJDIR)../../GSFC/RBT/
+   RBTSRC = $(RBTDIR)Source/
+   RBTOBJ = $(OBJ)RbtFsw.o
+else
+   RBTDIR = 
+   RBTSRC = 
+   RBTOBJ =
+endif
+
+
 ifneq ($(strip $(GMSECFLAG)),)
    GMSECOBJ = $(OBJ)gmseckit.o
    ACIPCOBJ = $(OBJ)AppReadFromFile.o $(OBJ)AppWriteToGmsec.o $(OBJ)AppReadFromGmsec.o \
@@ -201,8 +224,8 @@ endif
 
 42OBJ = $(OBJ)42main.o $(OBJ)42exec.o $(OBJ)42actuators.o $(OBJ)42cmd.o \
 $(OBJ)42dynamics.o $(OBJ)42environs.o $(OBJ)42ephem.o $(OBJ)42fsw.o \
-$(OBJ)42init.o $(OBJ)42ipc.o $(OBJ)42perturb.o $(OBJ)42report.o \
-$(OBJ)42sensors.o \
+$(OBJ)42init.o $(OBJ)42ipc.o $(OBJ)42jitter.o $(OBJ)42joints.o \
+$(OBJ)42perturb.o $(OBJ)42report.o $(OBJ)42sensors.o \
 $(OBJ)42nos3.o
 
 KITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o $(OBJ)geomkit.o \
@@ -220,19 +243,19 @@ $(OBJ)AppWriteToSocket.o $(OBJ)AppReadFromSocket.o $(OBJ)AppWriteToFile.o
 #ANSIFLAGS = -Wstrict-prototypes -pedantic -ansi -Werror
 ANSIFLAGS =
 
-CFLAGS = -fpic -Wall -Wshadow -Wno-deprecated -g  $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) $(GMSECINC) -O0 $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG)
+CFLAGS = -fpic -Wall -Wshadow -Wno-deprecated $(XWARN) -g  $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) -I $(RBTSRC) $(GMSECINC) -O0 $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG) $(RBTFLAG)
 
 
 ##########################  Rules to link 42  #############################
 
-42 : $(42OBJ) $(GUIOBJ) $(SIMIPCOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(KITOBJ) $(ACOBJ) $(GMSECOBJ)
-	$(CC) $(LFLAGS) $(GMSECBIN) -o $(EXENAME) $(42OBJ) $(GUIOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(KITOBJ) $(ACOBJ) $(GMSECOBJ) $(SIMIPCOBJ) $(LIBS) $(GMSECLIB)
+42 : $(42OBJ) $(GUIOBJ) $(SIMIPCOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(KITOBJ) $(ACOBJ) $(GMSECOBJ) $(RBTOBJ)
+	$(CC) $(LFLAGS) $(GMSECBIN) -o $(EXENAME) $(42OBJ) $(GUIOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(KITOBJ) $(ACOBJ) $(GMSECOBJ) $(SIMIPCOBJ) $(RBTOBJ) $(LIBS) $(GMSECLIB)
 
 AcApp : $(OBJ)AcApp.o $(ACKITOBJ) $(ACIPCOBJ) $(GMSECOBJ)
 	$(CC) $(LFLAGS) -o AcApp $(OBJ)AcApp.o $(ACKITOBJ) $(ACIPCOBJ) $(GMSECOBJ) $(LIBS)
 	
-libkit : $(LIBKITOBJ)
-	$(CC) $(LFLAGS) -shared -o $(KITDIR)libkit.so $(LIBKITOBJ)
+42kit : $(LIBKITOBJ)
+	$(CC) $(LFLAGS) -shared -o $(KITDIR)42kit.so $(LIBKITOBJ)
 
 
 ####################  Rules to compile objects  ###########################
@@ -278,6 +301,12 @@ $(OBJ)42init.o      : $(SRC)42init.c $(INC)42.h
 
 $(OBJ)42ipc.o       : $(SRC)42ipc.c $(INC)42.h
 	$(CC) $(CFLAGS) -c $(SRC)42ipc.c -o $(OBJ)42ipc.o
+
+$(OBJ)42jitter.o    : $(SRC)42jitter.c $(INC)42.h
+	$(CC) $(CFLAGS) -c $(SRC)42jitter.c -o $(OBJ)42jitter.o
+
+$(OBJ)42joints.o    : $(SRC)42joints.c $(INC)42.h
+	$(CC) $(CFLAGS) -c $(SRC)42joints.c -o $(OBJ)42joints.o
 
 $(OBJ)42perturb.o   : $(SRC)42perturb.c $(INC)42.h
 	$(CC) $(CFLAGS) -c $(SRC)42perturb.c -o $(OBJ)42perturb.o
@@ -384,6 +413,9 @@ $(OBJ)AppReadFromSocket.o  : $(IPCSRC)AppReadFromSocket.c $(INC)42.h $(INC)AcTyp
 $(OBJ)42nos3.o         : $(SRC)42nos3.c
 	$(CC) $(CFLAGS) -c $(SRC)42nos3.c -o $(OBJ)42nos3.o
 
+$(OBJ)RbtFsw.o         : $(RBTSRC)RbtFsw.c $(RBTSRC)Rbt.h
+	$(CC) $(CFLAGS) -c $(RBTSRC)RbtFsw.c -o $(OBJ)RbtFsw.o
+
 ########################  Miscellaneous Rules  ############################
 clean :
 ifeq ($(42PLATFORM),_WIN32)
@@ -391,5 +423,5 @@ ifeq ($(42PLATFORM),_WIN32)
 else ifeq ($(42PLATFORM),_WIN64)
 	del .\Object\*.o .\$(EXENAME) .\InOut\*.42
 else
-	rm -f $(OBJ)*.o ./$(EXENAME) ./AcApp $(KITDIR)libkit.so $(INOUT)*.42 ./Standalone/*.42 ./Demo/*.42 ./Rx/*.42 ./Tx/*.42
+	rm -f $(OBJ)*.o ./$(EXENAME) ./AcApp $(KITDIR)42kit.so $(INOUT)*.42 ./Standalone/*.42 ./Demo/*.42 ./Rx/*.42 ./Tx/*.42
 endif

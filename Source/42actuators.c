@@ -21,54 +21,54 @@
 */
 
 /**********************************************************************/
-void ThrModel(struct ThrType *Thr,struct SCType *S,double DT)
+double ViscousFriction(struct WhlType *W)
 {
-      struct FlexNodeType *FN;
-      double r[3];
-      long i;
-
-      if (Thr->PulseWidthCmd > DT) {
-         Thr->F = Thr->Fmax;
-         Thr->PulseWidthCmd -= DT;
+      return(-W->ViscCoef*W->w);
+}
+/**********************************************************************/
+/* Ref: Lugre Friction Model.pdf                                      */
+void WhlDrag(struct WhlType *W)
+{
+      double v0,g,m,vd,zdot;
+      
+      v0 = W->w/W->StribeckZone;
+      g = W->CoulCoef + W->StribeckCoef*exp(-(v0*v0));
+      m = W->LugreSpringCoef*fabs(W->w)/g;
+      if (m*DTSIM > 1.0) {
+         zdot = (g*signum(W->w)/W->LugreSpringCoef - W->z)/DTSIM;
+         W->FricTrq = -g*signum(W->w) + ViscousFriction(W);
       }
       else {
-         Thr->F = (Thr->PulseWidthCmd/DT)*Thr->Fmax;
-         Thr->PulseWidthCmd = 0.0;
+         zdot = W->w - m*W->z;
+         vd = W->w/W->LugreDampZone;
+         W->FricTrq = -W->LugreSpringCoef*W->z 
+            - W->LugreDampCoef*exp(-vd*vd)*zdot
+            + ViscousFriction(W);
       }
-
-      if (Thr->F < 0.0) Thr->F = 0.0;
-      if (Thr->F > Thr->Fmax) Thr->F = Thr->Fmax;
-
-      Thr->Frc[0] = Thr->F*Thr->A[0];
-      Thr->Frc[1] = Thr->F*Thr->A[1];
-      Thr->Frc[2] = Thr->F*Thr->A[2];
-
-      for(i=0;i<3;i++) r[i] = Thr->PosB[i] - S->B[Thr->Body].cm[i];
-      VxV(r,Thr->Frc,Thr->Trq);
-
-      if (S->FlexActive) {
-         FN = &S->B[0].FlexNode[Thr->FlexNode];
-         for(i=0;i<3;i++) {
-            FN->Trq[i] += Thr->Trq[i];
-            FN->Frc[i] += Thr->Frc[i];
-         }
-      }
+      
+      W->z += zdot*DTSIM;
 }
 /**********************************************************************/
 void WhlModel(struct WhlType *W,struct SCType *S)
 {
-      struct FlexNodeType *FN;
+      struct BodyType *B;
+      struct NodeType *N;
       long i;
 
       W->Trq = W->Tcmd;
+      if (S->WhlDragActive) {
+         WhlDrag(W);
+         W->Trq += W->FricTrq;
+      }
       if (W->Trq < -W->Tmax) W->Trq = -W->Tmax;
       if (W->Trq >  W->Tmax) W->Trq =  W->Tmax;
       if (W->Trq < 0.0 && W->H <= -W->Hmax) W->Trq = 0.0;
       if (W->Trq > 0.0 && W->H >=  W->Hmax) W->Trq = 0.0;
 
       if (S->FlexActive) {
-         FN = &S->B[0].FlexNode[W->FlexNode];
-         for(i=0;i<3;i++) FN->Trq[i] += W->Trq*W->A[i];
+         B = &S->B[W->Body];
+         N = &B->Node[W->Node];
+         for(i=0;i<3;i++) N->Trq[i] += W->Trq*W->A[i];
       }
 
 }
@@ -86,45 +86,44 @@ void MTBModel(struct MTBType *MTB,double bvb[3])
 
 }
 /**********************************************************************/
-void GimbalModel(long DOF,double Rate[3],double Ang[3],
-                 double RateCmd[3],double AngCmd[3],
-                 double RateGain[3],double AngGain[3],
-                 double MaxRate[3], double MaxTrq[3], double Trq[3])
+void ThrModel(struct ThrType *Thr,struct SCType *S,double DT)
 {
-      double DesiredRate,AngErr;
+      struct BodyType *B;
+      struct NodeType *N;
       long i;
 
-      for(i=0;i<DOF;i++) {
-         AngErr = fmod(Ang[i] - AngCmd[i],TwoPi);
-         if (AngErr > Pi) AngErr -= TwoPi;
-         if (AngErr < -Pi) AngErr += TwoPi;
-         if (RateGain[i] != 0.0) {
-            DesiredRate = Limit(RateCmd[i] - AngGain[i]/RateGain[i]*AngErr,
-                                -MaxRate[i],MaxRate[i]);
+      if (Thr->Mode == THR_PULSED) {
+         if (Thr->PulseWidthCmd > DT) {
+            Thr->F = Thr->Fmax;
+            Thr->PulseWidthCmd -= DT;
          }
          else {
-            DesiredRate = Limit(RateCmd[i],-MaxRate[i],MaxRate[i]);
+            Thr->F = (Thr->PulseWidthCmd/DT)*Thr->Fmax;
+            Thr->PulseWidthCmd = 0.0;
          }
-         Trq[i] = Limit(-RateGain[i]*(Rate[i]-DesiredRate),
-                        -MaxTrq[i],MaxTrq[i]);
       }
-}
-/**********************************************************************/
-void TranslationalModel(long DOF, double Rate[3], double Pos[3],
-                        double RateCmd[3], double PosCmd[3],
-                        double RateGain[3], double PosGain[3],
-                        double MaxRate[3], double MaxFrc[3], double Frc[3])
-{
-   double DesiredRate,PosErr;
-   long i;
+      else { /* THR_PROPORTIONAL */
+         Thr->F = Thr->ThrustLevelCmd*Thr->Fmax;
+      }
 
-   for(i=0;i<DOF;i++) {
-      PosErr = Pos[i] - PosCmd[i];
-      DesiredRate = Limit(RateCmd[i] - PosGain[i]/RateGain[i]*PosErr,
-                          -MaxRate[i],MaxRate[i]);
-      Frc[i] = Limit(-RateGain[i]*(Rate[i]-DesiredRate),
-                     -MaxFrc[i],MaxFrc[i]);
-   }
+      if (Thr->F < 0.0) Thr->F = 0.0;
+      if (Thr->F > Thr->Fmax) Thr->F = Thr->Fmax;
+
+      Thr->Frc[0] = Thr->F*Thr->A[0];
+      Thr->Frc[1] = Thr->F*Thr->A[1];
+      Thr->Frc[2] = Thr->F*Thr->A[2];
+
+      B = &S->B[Thr->Body];
+      N = &B->Node[Thr->Node];
+
+      VxV(N->PosCm,Thr->Frc,Thr->Trq);
+
+      if (S->FlexActive) {
+         for(i=0;i<3;i++) {
+            N->Trq[i] += Thr->Trq[i];
+            N->Frc[i] += Thr->Frc[i];
+         }
+      }
 }
 /**********************************************************************/
 void ThrusterPlumeFrcTrq(struct SCType *S)
@@ -141,7 +140,8 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
       double Coef = mdot/(Beta*A1*Pi);
       /* Other variables */
       struct ThrType *T;
-      struct BodyType *B;
+      struct BodyType *B,*Bt;
+      struct NodeType *Nt;
       struct GeomType *G;
       struct PolyType *P;
       double PosThrN[3],PosThrB[3],AxisN[3],CPB[3][3];
@@ -151,6 +151,9 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
 
       for(Ithr=0;Ithr<S->Nthr;Ithr++) {
          T = &S->Thr[Ithr];
+         Bt = &S->B[T->Body];
+         Nt = &Bt->Node[T->Node];
+         
          if (T->F > 0.0) { /* Check that this is legit */
 
             /* Find Force and Torque on each Body */
@@ -159,12 +162,12 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
                G = &Geom[B->GeomTag];
 
                /* Find thruster location, axis in B */
-               MTxV(S->B[0].CN,T->PosB,PosThrN);
-               for(i=0;i<3;i++) PosThrN[i] += S->B[0].pn[i] - B->pn[i];
+               MTxV(Bt->CN,Nt->PosB,PosThrN);
+               for(i=0;i<3;i++) PosThrN[i] += Bt->pn[i] - B->pn[i];
                MxV(B->CN,PosThrN,PosThrB);
                /* Note that plume axis is opposite T->A */
                /* CPB is DCM from B to Plume (P) frame */
-               MTxV(S->B[0].CN,T->A,AxisN);
+               MTxV(Bt->CN,T->A,AxisN);
                MxV(B->CN,AxisN,CPB[0]);
                for(i=0;i<3;i++) CPB[0][i] = -CPB[0][i];
                PerpBasis(CPB[0],CPB[1],CPB[2]);
@@ -215,13 +218,15 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
 void Actuators(struct SCType *S)
 {
 
-      struct FlexNodeType *FN;
+      struct NodeType *N;
       long i,j;
       double FrcN[3],FrcB[3];
       struct AcType *AC;
       struct JointType *G;
       struct AcJointType *AG;
       struct ThrType *Thr;
+      struct ShakerType *Sh;
+      struct WhlType *W;
 
       AC = &S->AC;
 
@@ -234,10 +239,10 @@ void Actuators(struct SCType *S)
          S->B[0].Trq[i] += S->IdealAct[i].Tcmd;
       }
       if (S->FlexActive) {
-         FN = &S->B[0].FlexNode[0]; /* Arbitrarily put ideal actuators at FN 0 */
+         N = &S->B[0].Node[0]; /* Arbitrarily put ideal actuators at Node 0 */
          for(i=0;i<3;i++) {
-            FN->Trq[i] += S->IdealAct[i].Tcmd;
-            FN->Frc[i] += S->IdealAct[i].Fcmd;
+            N->Trq[i] += S->IdealAct[i].Tcmd;
+            N->Frc[i] += S->IdealAct[i].Fcmd;
          }
       }
 
@@ -257,16 +262,12 @@ void Actuators(struct SCType *S)
       for(i=0;i<AC->Ng;i++) {
          G = &S->G[i];
          AG = &AC->G[i];
-         if (AG->IsUnderActiveControl) {
-            /* PD Gimbal Control */
-            GimbalModel(G->RotDOF,AG->AngRate,AG->Ang,
-                        AG->Cmd.AngRate,AG->Cmd.Ang,
-                        AG->AngRateGain,AG->AngGain,
-                        AG->MaxAngRate,AG->MaxTrq,G->Trq);
-            /* Ideal Kinematic Gimbal Control */
+         if (G->Type == ACTUATED_JOINT) {
             for(j=0;j<G->RotDOF;j++) {
-               G->RateCmd[j] = AG->Cmd.AngRate[j];
-               G->AngCmd[j] = AG->Cmd.Ang[j];
+               G->AngRateCmd[j] = AG->Cmd.AngRate[j];
+            }
+            for(j=0;j<G->TrnDOF;j++) {
+               G->PosRateCmd[j] = AG->Cmd.PosRate[j];
             }
          }
       }
@@ -285,7 +286,34 @@ void Actuators(struct SCType *S)
       if (ThrusterPlumesActive) {
          ThrusterPlumeFrcTrq(S);
       }
-
+      
+      /* Wheel Jitter and Shakers only affect Flex */
+      if (S->FlexActive) {
+         for(i=0;i<S->Nsh;i++) {
+            Sh = &S->Shaker[i];
+            N = &S->B[Sh->Body].Node[Sh->Node];
+            ShakerJitter(Sh,S);
+            if (Sh->FrcTrq == FORCE) {
+               for(j=0;j<3;j++) N->Frc[j] += Sh->Output*Sh->Axis[j];
+            }
+            else {
+               for(j=0;j<3;j++) N->Trq[j] += Sh->Output*Sh->Axis[j];
+            }
+         }
+         
+         if (S->WhlJitterActive) {
+            for(i=0;i<S->Nw;i++) {
+               W = &S->Whl[i];
+               N = &S->B[W->Body].Node[W->Node];
+               WheelJitter(W,S);
+               for(j=0;j<3;j++) {
+                  N->Frc[j] += W->JitFrc[j];
+                  N->Trq[j] += W->JitTrq[j];
+               }
+            }
+         }
+      }
+            
 }
 
 /* #ifdef __cplusplus

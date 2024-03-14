@@ -23,11 +23,7 @@
 */
 
 #ifdef _ENABLE_GUI_
-   #ifdef _USE_GLUT_
-      extern int HandoffToGui(int argc, char **argv);
-   #else
-      extern int HandoffToGui(void);
-   #endif
+   extern int HandoffToGui(int argc, char **argv);
 #endif
 
 /**********************************************************************/
@@ -105,7 +101,7 @@ long AdvanceTime(void)
                &UTC.Hour,&UTC.Minute,&UTC.Second,DTSIM);
             UTC.doy = MD2DOY(UTC.Year,UTC.Month,UTC.Day);
 
-            JDToGpsTime(TT.JulDay,&GpsRollover,&GpsWeek,&GpsSecond);
+            GpsTimeToGpsDate(GpsTime,&GpsRollover,&GpsWeek,&GpsSecond);
 
             break;
          case REAL_TIME :
@@ -129,7 +125,7 @@ long AdvanceTime(void)
                &UTC.Hour,&UTC.Minute,&UTC.Second,DTSIM);
             UTC.doy = MD2DOY(UTC.Year,UTC.Month,UTC.Day);
 
-            JDToGpsTime(TT.JulDay,&GpsRollover,&GpsWeek,&GpsSecond);
+            GpsTimeToGpsDate(GpsTime,&GpsRollover,&GpsWeek,&GpsSecond);
 
             break;
          case EXTERNAL_TIME :
@@ -147,6 +143,7 @@ long AdvanceTime(void)
                UTC.Hour,UTC.Minute,UTC.Second);
             AtomicTime = CivilTime + LeapSec;
             DynTime = AtomicTime + 32.184;
+            GpsTime = AtomicTime - 19.0;
 
             TT.JulDay = TimeToJD(DynTime);
             TimeToDate(DynTime,&TT.Year,&TT.Month,&TT.Day,
@@ -156,7 +153,7 @@ long AdvanceTime(void)
             UTC.JulDay = TimeToJD(CivilTime);
             UTC.doy = MD2DOY(UTC.Year,UTC.Month,UTC.Day);
 
-            JDToGpsTime(TT.JulDay,&GpsRollover,&GpsWeek,&GpsSecond);
+            GpsTimeToGpsDate(GpsTime,&GpsRollover,&GpsWeek,&GpsSecond);
             DynTime0 = DynTime - SimTime;
 
             break;
@@ -167,6 +164,7 @@ long AdvanceTime(void)
                UTC.Hour,UTC.Minute,UTC.Second);
             AtomicTime = CivilTime + LeapSec;
             DynTime = AtomicTime + 32.184;
+            GpsTime = AtomicTime - 19.0;
 
             TT.JulDay = TimeToJD(DynTime);
             TimeToDate(DynTime,&TT.Year,&TT.Month,&TT.Day,
@@ -176,7 +174,7 @@ long AdvanceTime(void)
             UTC.JulDay = TimeToJD(CivilTime);
             UTC.doy = MD2DOY(UTC.Year,UTC.Month,UTC.Day);
 
-            JDToGpsTime(TT.JulDay,&GpsRollover,&GpsWeek,&GpsSecond);
+            GpsTimeToGpsDate(GpsTime,&GpsRollover,&GpsWeek,&GpsSecond);
             SimTime = DynTime - DynTime0;
             break;
       }
@@ -258,7 +256,7 @@ void ZeroFrcTrq(void)
       struct SCType *S;
       struct BodyType *B;
       struct JointType *G;
-      struct FlexNodeType *FN;
+      struct NodeType *FN;
       long Isc,Ib,Ig,In;
 
       for(Isc=0;Isc<Nsc;Isc++) {
@@ -288,18 +286,16 @@ void ZeroFrcTrq(void)
             G->Trq[1] = 0.0;
             G->Trq[2] = 0.0;
          }
-         if (S->FlexActive) {
-            for(Ib=0;Ib<S->Nb;Ib++) {
-               B = &S->B[Ib];
-               for(In=0;In<B->NumFlexNodes;In++) {
-                 FN = &B->FlexNode[In];
-                 FN->Frc[0] = 0.0;
-                 FN->Frc[1] = 0.0;
-                 FN->Frc[2] = 0.0;
-                 FN->Trq[0] = 0.0;
-                 FN->Trq[1] = 0.0;
-                 FN->Trq[2] = 0.0;
-               }
+         for(Ib=0;Ib<S->Nb;Ib++) {
+            B = &S->B[Ib];
+            for(In=0;In<B->NumNodes;In++) {
+              FN = &B->Node[In];
+              FN->Frc[0] = 0.0;
+              FN->Frc[1] = 0.0;
+              FN->Frc[2] = 0.0;
+              FN->Trq[0] = 0.0;
+              FN->Trq[1] = 0.0;
+              FN->Trq[2] = 0.0;
             }
          }
       }
@@ -347,8 +343,8 @@ long SimStep(void)
       for(Isc=0;Isc<Nsc;Isc++) {
          if (SC[Isc].Exists) Dynamics(&SC[Isc]);
       }
-      OrbitMotion(DynTime+DTSIM);
       SimComplete = AdvanceTime();
+      OrbitMotion(DynTime);
 
       /* Update SC Bounding Boxes occasionally */
       ManageBoundingBoxes();
@@ -402,11 +398,7 @@ int exec(int argc,char **argv)
       InitInterProcessComm();
       #ifdef _ENABLE_GUI_
          if (GLEnable) {
-            #ifdef _USE_GLUT_
-               HandoffToGui(argc,argv);
-            #else
-               HandoffToGui();
-            #endif
+            HandoffToGui(argc,argv);
          }
          else {
             while(!Done) {
