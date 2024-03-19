@@ -13,8 +13,10 @@
 
 
 #include "42.h"
-#define EXTERN
+#define EXTERN extern
 #include "42gl.h"
+#undef EXTERN
+#define EXTERN
 #include "42glfw.h"
 #undef EXTERN
 
@@ -919,9 +921,9 @@ void SphereReshape(GLFWwindow *Window, int width, int height)
 void InitCamWindow(void)
 {
 
-      int w,h;
-
+      #ifdef __APPLE__
       glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,GLFW_FALSE);
+	   #endif
       CamWindow = glfwCreateWindow(CamWidth,CamHeight,CamTitle,NULL,NULL);
       #if (defined(GLEW_BUILD) || defined(GLEW_STATIC))
       if (GLEW_OK != glewInit()) {
@@ -933,8 +935,7 @@ void InitCamWindow(void)
       glfwMakeContextCurrent(CamWindow);
       glfwSwapInterval(1); /* Vsync */
       glfwSetWindowPos(CamWindow,0,30);
-      glfwGetFramebufferSize(CamWindow,&w,&h);
-      glViewport(0,0,w,h);
+      glViewport(0,0,CamWidth,CamHeight);
 
 /* .. Set GL state variables */
       glClearColor(0.0,0.0,0.0,1.0);
@@ -1008,7 +1009,9 @@ void InitMapWindow(void)
       GLuint RockballMapTexTag;
       GLuint IceballMapTexTag;
 
+      #ifdef __APPLE__
       glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,GLFW_FALSE);
+	   #endif
       MapWindow = glfwCreateWindow(MapWidth,MapHeight,MapTitle,NULL,NULL);
       glfwMakeContextCurrent(MapWindow);
       glfwSetWindowPos(MapWindow,CamWidth,30);
@@ -1113,7 +1116,9 @@ void InitOrreryWindow(void)
          strcpy(O->ScaleLabel[i],ScaleLabel[i]);
       }
 
+      #ifdef __APPLE__
       glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,GLFW_FALSE);
+	  #endif
       OrreryWindow = glfwCreateWindow(OrreryWidth,OrreryHeight,OrreryTitle,NULL,NULL);
       glfwMakeContextCurrent(OrreryWindow);
       glfwSetWindowPos(OrreryWindow,CamWidth,MapHeight+66);
@@ -1170,7 +1175,9 @@ void InitSphereWindow(void)
 
       SphereWindowWidth = 512;
       SphereWindowHeight = 256 + 16*(NumSphereWindowMenuLines + 2);
+      #ifdef __APPLE__
       glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER,GLFW_FALSE);
+	  #endif
       SphereWindow = glfwCreateWindow(SphereWindowWidth,SphereWindowHeight,
             "42 Unit Sphere Viewer",NULL,NULL);
       glfwMakeContextCurrent(SphereWindow);
@@ -1335,7 +1342,7 @@ long GuiCmdInterpreter(char CmdLine[512], double *CmdTime)
       return(NewCmdProcessed);
 }
 /*********************************************************************/
-void HandoffToGui(void)
+void HandoffToGui(int argc, char **argv)
 {
       PausedByMouse = 0;
 
@@ -1346,6 +1353,7 @@ void HandoffToGui(void)
       UpdatePOV();
 
       printf("Initializing glfw\n");
+      glutInit(&argc,argv);
       glfwSetErrorCallback(GlfwErrorHandler);
       if (!glfwInit()) {
          printf("Error initializing glfw\n");

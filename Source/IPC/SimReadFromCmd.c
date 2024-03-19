@@ -30,26 +30,6 @@ void ReadFromCmd(void)
             RequestTimeRefresh = 1;
          }
 
-            if (sscanf(line,"Orb[%ld].PosN = %le %le %le",
-               &Iorb,
-               &DbleVal[0],
-               &DbleVal[1],
-               &DbleVal[2]) == 4) {
-               Orb[Iorb].PosN[0] = DbleVal[0];
-               Orb[Iorb].PosN[1] = DbleVal[1];
-               Orb[Iorb].PosN[2] = DbleVal[2];
-            }
-
-            if (sscanf(line,"Orb[%ld].VelN = %le %le %le",
-               &Iorb,
-               &DbleVal[0],
-               &DbleVal[1],
-               &DbleVal[2]) == 4) {
-               Orb[Iorb].VelN[0] = DbleVal[0];
-               Orb[Iorb].VelN[1] = DbleVal[1];
-               Orb[Iorb].VelN[2] = DbleVal[2];
-            }
-
             if (sscanf(line,"SC[%ld].PosR = %le %le %le",
                &Isc,
                &DbleVal[0],
@@ -135,6 +115,16 @@ void ReadFromCmd(void)
                SC[Isc].AC.Hvb[2] = DbleVal[2];
             }
 
+            if (sscanf(line,"SC[%ld].AC.G[%ld].Cmd.AngRate = %le %le %le",
+               &Isc,&i,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 5) {
+               SC[Isc].AC.G[i].Cmd.AngRate[0] = DbleVal[0];
+               SC[Isc].AC.G[i].Cmd.AngRate[1] = DbleVal[1];
+               SC[Isc].AC.G[i].Cmd.AngRate[2] = DbleVal[2];
+            }
+
             if (sscanf(line,"SC[%ld].AC.G[%ld].Cmd.Ang = %le %le %le",
                &Isc,&i,
                &DbleVal[0],
@@ -185,6 +175,22 @@ void ReadFromCmd(void)
                &Isc,&i,
                &DbleVal[0]) == 3) {
                SC[Isc].AC.Thr[i].PulseWidthCmd = DbleVal[0];
+            }
+
+            if (sscanf(line,"SC[%ld].AC.Thr[%ld].ThrustLevelCmd = %le",
+               &Isc,&i,
+               &DbleVal[0]) == 3) {
+               SC[Isc].AC.Thr[i].ThrustLevelCmd = DbleVal[0];
+            }
+
+            if (sscanf(line,"SC[%ld].AC.Cmd.AngRate = %le %le %le",
+               &Isc,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               SC[Isc].AC.Cmd.AngRate[0] = DbleVal[0];
+               SC[Isc].AC.Cmd.AngRate[1] = DbleVal[1];
+               SC[Isc].AC.Cmd.AngRate[2] = DbleVal[2];
             }
 
             if (sscanf(line,"SC[%ld].AC.Cmd.Ang = %le %le %le",
@@ -289,6 +295,50 @@ void ReadFromCmd(void)
                SC[Isc].RequestStateRefresh = 1;
             }
 
+            if (sscanf(line,"SC[%ld].GN.Pos = %le %le %le",
+               &Isc,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               SC[Isc].GN.Pos[0] = DbleVal[0];
+               SC[Isc].GN.Pos[1] = DbleVal[1];
+               SC[Isc].GN.Pos[2] = DbleVal[2];
+               SC[Isc].RequestStateRefresh = 1;
+            }
+
+            if (sscanf(line,"SC[%ld].GN.PosRate = %le %le %le",
+               &Isc,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               SC[Isc].GN.PosRate[0] = DbleVal[0];
+               SC[Isc].GN.PosRate[1] = DbleVal[1];
+               SC[Isc].GN.PosRate[2] = DbleVal[2];
+               SC[Isc].RequestStateRefresh = 1;
+            }
+
+            if (sscanf(line,"SC[%ld].GN.Ang = %le %le %le",
+               &Isc,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               SC[Isc].GN.Ang[0] = DbleVal[0];
+               SC[Isc].GN.Ang[1] = DbleVal[1];
+               SC[Isc].GN.Ang[2] = DbleVal[2];
+               SC[Isc].RequestStateRefresh = 1;
+            }
+
+            if (sscanf(line,"SC[%ld].GN.AngRate = %le %le %le",
+               &Isc,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               SC[Isc].GN.AngRate[0] = DbleVal[0];
+               SC[Isc].GN.AngRate[1] = DbleVal[1];
+               SC[Isc].GN.AngRate[2] = DbleVal[2];
+               SC[Isc].RequestStateRefresh = 1;
+            }
+
             if (sscanf(line,"SC[%ld].Whl[%ld].H = %le",
                &Isc,&i,
                &DbleVal[0]) == 3) {
@@ -324,6 +374,26 @@ void ReadFromCmd(void)
                World[Iw].eph.VelN[0] = DbleVal[0];
                World[Iw].eph.VelN[1] = DbleVal[1];
                World[Iw].eph.VelN[2] = DbleVal[2];
+            }
+
+            if (sscanf(line,"Orb[%ld].PosN = %le %le %le",
+               &Iorb,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               Orb[Iorb].PosN[0] = DbleVal[0];
+               Orb[Iorb].PosN[1] = DbleVal[1];
+               Orb[Iorb].PosN[2] = DbleVal[2];
+            }
+
+            if (sscanf(line,"Orb[%ld].VelN = %le %le %le",
+               &Iorb,
+               &DbleVal[0],
+               &DbleVal[1],
+               &DbleVal[2]) == 4) {
+               Orb[Iorb].VelN[0] = DbleVal[0];
+               Orb[Iorb].VelN[1] = DbleVal[1];
+               Orb[Iorb].VelN[2] = DbleVal[2];
             }
 
          for(Isc=0;Isc<Nsc;Isc++) {
@@ -419,6 +489,18 @@ void ReadFromCmd(void)
                      SC[Isc].AC.Nacc = LongVal[0];
                   }
 
+                  if (sscanf(line,"SC[%ld].AC.Pi = %le",
+                     &Isc,
+                     &DbleVal[0]) == 2) {
+                     SC[Isc].AC.Pi = DbleVal[0];
+                  }
+
+                  if (sscanf(line,"SC[%ld].AC.TwoPi = %le",
+                     &Isc,
+                     &DbleVal[0]) == 2) {
+                     SC[Isc].AC.TwoPi = DbleVal[0];
+                  }
+
                   if (sscanf(line,"SC[%ld].AC.DT = %le",
                      &Isc,
                      &DbleVal[0]) == 2) {
@@ -499,12 +581,6 @@ void ReadFromCmd(void)
                      SC[Isc].AC.B[i].MOI[2][0] = DbleVal[6];
                      SC[Isc].AC.B[i].MOI[2][1] = DbleVal[7];
                      SC[Isc].AC.B[i].MOI[2][2] = DbleVal[8];
-                  }
-
-                  if (sscanf(line,"SC[%ld].AC.G[%ld].IsUnderActiveControl = %ld",
-                     &Isc,&i,
-                     &LongVal[0]) == 3) {
-                     SC[Isc].AC.G[i].IsUnderActiveControl = LongVal[0];
                   }
 
                   if (sscanf(line,"SC[%ld].AC.G[%ld].IsSpherical = %ld",
@@ -791,6 +867,12 @@ void ReadFromCmd(void)
                      SC[Isc].AC.Accel[i].Axis[2] = DbleVal[2];
                   }
 
+                  if (sscanf(line,"SC[%ld].AC.Whl[%ld].Body = %ld",
+                     &Isc,&i,
+                     &LongVal[0]) == 3) {
+                     SC[Isc].AC.Whl[i].Body = LongVal[0];
+                  }
+
                   if (sscanf(line,"SC[%ld].AC.Whl[%ld].Axis = %le %le %le",
                      &Isc,&i,
                      &DbleVal[0],
@@ -853,6 +935,12 @@ void ReadFromCmd(void)
                      &Isc,&i,
                      &DbleVal[0]) == 3) {
                      SC[Isc].AC.MTB[i].Mmax = DbleVal[0];
+                  }
+
+                  if (sscanf(line,"SC[%ld].AC.Thr[%ld].Body = %ld",
+                     &Isc,&i,
+                     &LongVal[0]) == 3) {
+                     SC[Isc].AC.Thr[i].Body = LongVal[0];
                   }
 
                   if (sscanf(line,"SC[%ld].AC.Thr[%ld].PosB = %le %le %le",
@@ -1142,13 +1230,14 @@ void ReadFromCmd(void)
          DOY2MD(UTC.Year,UTC.doy,&UTC.Month,&UTC.Day);
          CivilTime = DateToTime(UTC.Year,UTC.Month,UTC.Day,UTC.Hour,UTC.Minute,UTC.Second);
          AtomicTime = CivilTime + LeapSec;
+         GpsTime = AtomicTime - 19.0;
          DynTime = AtomicTime + 32.184;
          TT.JulDay = TimeToJD(DynTime);
          TimeToDate(DynTime,&TT.Year,&TT.Month,&TT.Day,
             &TT.Hour,&TT.Minute,&TT.Second,DTSIM);
          TT.doy = MD2DOY(TT.Year,TT.Month,TT.Day);
          UTC.JulDay = TimeToJD(CivilTime);
-         JDToGpsTime(TT.JulDay,&GpsRollover,&GpsWeek,&GpsSecond);
+         GpsTimeToGpsDate(GpsTime,&GpsRollover,&GpsWeek,&GpsSecond);
          SimTime = DynTime-DynTime0;
       }
 
@@ -1177,7 +1266,7 @@ void ReadFromCmd(void)
                /* Update Dyn */
                MapJointStatesToStateVector(S);
                D = &S->Dyn;
-               MapStateVectorToBodyStates(D->u,D->x,D->uf,D->xf,S);
+               MapStateVectorToBodyStates(D->u,D->x,D->h,D->a,D->uf,D->xf,S);
                MotionConstraints(S);
             }
          }

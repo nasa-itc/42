@@ -206,6 +206,7 @@
 
 #define EPH_MEAN 0
 #define EPH_DE430 1
+#define EPH_DE440 2
 
 #define REFPT_CM 0
 #define REFPT_JOINT 1
@@ -242,7 +243,7 @@
 #define CMG_FSW 7
 #define THR_FSW 8
 #define CFS_FSW 9
-#define FREQRESP_FSW 10
+#define RBT_FSW 10
 
 /* Command Types */
 #define CMD_DIRECTION 0
@@ -289,5 +290,23 @@
 #define MAJOR_CONSTELL 0
 #define ZODIAC_CONSTELL 1
 #define MINOR_CONSTELL 2
+
+/* Joint Types */
+#define PASSIVE_JOINT 0
+#define ACTUATED_JOINT 1
+#define STEPPER_MOTOR_JOINT 2
+#define VIBRATION_ISOLATOR_JOINT 3
+#define SLOSH_JOINT 4
+#define STEERING_MIRROR_JOINT 5
+#define TVC_JOINT 6
+#define AD_HOC_JOINT 7
+
+/* For Shakers */
+#define FORCE 0
+#define TORQUE 1
+
+/* Thruster Command Modes */
+#define THR_PULSED 0
+#define THR_PROPORTIONAL 1
 
 #endif /* __42DEFINES_H__ */

@@ -79,9 +79,8 @@ EXTERN long GGActive;
 EXTERN long SolPressActive;
 EXTERN long SolPressShadowsActive;
 EXTERN long GravPertActive;
-EXTERN long JointTrqActive;
 EXTERN long ThrusterPlumesActive;
-EXTERN long RwaImbalanceActive;
+EXTERN long ResidualDipoleActive;
 EXTERN long ContactActive;
 EXTERN long SloshActive;
 EXTERN long AlbedoActive; /* Affects CSS measurements */
@@ -158,6 +157,7 @@ EXTERN struct IpcType *IPC;
 
 /* Master Random Process */
 EXTERN struct RandomProcessType *RNG;
+EXTERN long RngSeed;
 
 EXTERN double MapTime,JointTime,PathTime,PVelTime,FrcTrqTime;
 EXTERN double AssembleTime,LockTime,TriangleTime,SubstTime,SolveTime;
@@ -182,8 +182,9 @@ void ThreeBodyOrbitRK4(struct OrbitType *O);
 void MotionConstraints(struct SCType *S);
 void SCMassProps(struct SCType *S);
 void MapJointStatesToStateVector(struct SCType *S);
-void MapStateVectorToBodyStates(double *u, double *x, double *uf,
-   double *xf, struct SCType *S);
+void MapStateVectorToBodyStates(double *u, double *x, double *h, double *a,
+   double *uf, double *xf, struct SCType *S);
+void BodyStatesToNodeStates(struct SCType *S);
 void PartitionForces(struct SCType *S);
 void Dynamics(struct SCType *S);
 void Cleanup(void);
@@ -196,7 +197,10 @@ void FindUnshadedAreas(struct SCType *S, double DirVecN[3]);
 void RadBelt(float RadiusKm, float MagLatDeg, int NumEnergies, 
       float *ElectronEnergy, float *ProtonEnergy, double **Flux); 
 void FindAlbedo(struct SCType *S, struct CssType *CSS);
-
+void JointFrcTrq(struct JointType *G, struct SCType *S);
+void InitActuatedJoint(struct JointType *G, struct SCType *S);
+void WheelJitter(struct WhlType *W, struct SCType *S);
+void ShakerJitter(struct ShakerType *Sh, struct SCType *S);
 
 /* Debug Function Prototypes */
 void EchoPVel(struct SCType *S);
@@ -208,7 +212,7 @@ void InitSim(int argc, char **argv);
 void InitOrbits(void);
 void InitSpacecraft(struct SCType *S);
 void LoadPlanets(void);
-long LoadDE430(char DE430Path[80],double JD);
+long LoadJplEphems(char EphemPath[80],double JD);
 long DecodeString(char *s);
 void InitFSW(struct SCType *S);
 void InitAC(struct SCType *S);
