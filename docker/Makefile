@@ -63,9 +63,7 @@ DOCKER_GATEWAY_HOST=172.17.0.1
 		-e XDG_RUNTIME_DIR=/tmp \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--name ${CONTAINER_NAME} \
-		--cpus=${NUM_CPUS} \
-		--privileged root \
-		${TAG}
+		${TAG} &
 
 #DOCKER_GATEWAY_HOST=172.17.0.1
 

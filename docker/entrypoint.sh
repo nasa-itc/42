@@ -6,6 +6,6 @@ export XDG_RUNTIME_DIR=/tmp
 # nohup openbox-session &
 # nohup ./42 &
 
-nohup xeyes &
+xeyes &
 
 tail -f /dev/null
