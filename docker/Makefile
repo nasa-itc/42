@@ -63,6 +63,8 @@ DOCKER_GATEWAY_HOST=172.17.0.1
 		-e XDG_RUNTIME_DIR=/tmp \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--name ${CONTAINER_NAME} \
+		-h fortytwo \
+		-p 4278:4278 \
 		${TAG} &
 
 #DOCKER_GATEWAY_HOST=172.17.0.1
@@ -80,7 +82,9 @@ DOCKER_GATEWAY_HOST=172.17.0.1
 # 		ballaerospace/cosmos:4.5.0
 
 42-down: ## Bring down 42
-	$(CONTAINER_COMPOSE) down -v --remove-orphans
+	docker stop ${TAG} || true
+
+#	$(CONTAINER_COMPOSE) down -v --remove-orphans
 
 x11: build x11-setup ## Run 42 in host's x windows
 	xhost + && \

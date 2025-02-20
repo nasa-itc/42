@@ -29,8 +29,8 @@ RUN apt install -y x11vnc x11-apps xvfb novnc net-tools xdotool openbox menu git
 
 # Source: https://github.com/gklingler/docker3d/blob/master/ubuntuWithOpenSourceDrivers/Dockerfile
 #  with hardware accelerated OpenGL support.
-RUN apt-get install -y mesa-utils
-RUN apt-get install -y xserver-xorg-video-all
+# RUN apt-get install -y mesa-utils
+# RUN apt-get install -y xserver-xorg-video-all
 #---
 
 RUN apt-get install -y build-essential
@@ -42,7 +42,9 @@ FROM fortytwo-base as fortytwo-dev
 ################################################################################
 # make 42
 WORKDIR /opt
-RUN git clone --recurse-submodules -b ${GIT_BRANCH} -j2 ${GIT_URL}
+#RUN git clone --recurse-submodules -b ${GIT_BRANCH} -j2 ${GIT_URL}
+
+RUN git clone --recurse-submodules -b nos3-main https://github.com/nasa-itc/42.git
 
 WORKDIR /opt/42
 RUN make
@@ -51,3 +53,7 @@ RUN make
 FROM fortytwo-dev as fortytwo
 ################################################################################
 COPY entrypoint.sh /entrypoint.sh
+
+COPY NOS3InOut /opt/42/NOS3InOut
+
+CMD [ "/entrypoint.sh" ]
