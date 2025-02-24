@@ -53,6 +53,7 @@ NUM_CPUS=$(shell expr $(_NUM_CPUS) / 2 )
 		--build-arg GIT_BRANCH=${GIT_BRANCH} \
 		-t ${TAG} .
 
+# docker network create nos3_sc_1
 DOCKER_GATEWAY_HOST=172.17.0.1
 42-up: | 42-down 42-build x11-setup 42-create-network ## bring up nos3 system, without yamcs-clean
 	$(call print_message,33,Bringing up ${IMAGE} from ${TAG}...)
@@ -63,8 +64,10 @@ DOCKER_GATEWAY_HOST=172.17.0.1
 		-e XDG_RUNTIME_DIR=/tmp \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--name ${CONTAINER_NAME} \
+		--network nos3_sc_1 \
 		-h fortytwo \
 		-p 4278:4278 \
+		-p 4245:4245 \
 		${TAG} &
 
 #DOCKER_GATEWAY_HOST=172.17.0.1

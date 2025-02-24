@@ -49,6 +49,7 @@ RUN git clone --recurse-submodules -b nos3-main https://github.com/nasa-itc/42.g
 WORKDIR /opt/42
 RUN make
 
+RUN apt-get install -y curl iputils-ping netcat-traditional tree jq
 ################################################################################
 FROM fortytwo-dev as fortytwo
 ################################################################################
