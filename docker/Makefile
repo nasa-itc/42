@@ -37,8 +37,16 @@ up: | down build ## bring up 42 via docker, in x/vnc system
 		${IMAGE_NAME_TAG}
 
 down: ## Bring down 42
-	docker stop ${CONTAINER_NAME} || true
-	docker rm ${CONTAINER_NAME} || true
+	@docker stop ${CONTAINER_NAME} || true
+	@docker rm ${CONTAINER_NAME} || true
+
+clean: ## clean up: stop, and remove container and delete 42's image
+  docker stop ${CONTAINER_NAME} || true && \
+  docker rm ${CONTAINER_NAME} || true && \
+  docker rmi ${IMAGE_NAME_TAG} || true
+
+delete: ## delete 42's image
+  docker rmi ${IMAGE_NAME_TAG}
 
 info: ## show info
 	@echo "open browser to http://localhost:${VNC_PORT}/vnc.html and click on 'Connect'"
@@ -52,7 +60,8 @@ LINE   = $(PURPLE)--------------------------------------------------------------
 help:
 	@echo
 	@printf "\033[37m%-30s\033[0m %s\n" "#----------------------------------------------------------------------------------------"
-	@printf "\033[37m%-30s\033[0m %s\n" "#        This Makefile can be used to run build, bring up, and brin down, in vnc         "
+	@printf "\033[37m%-30s\033[0m %s\n" "# This Makefile can be used to run build, bring up, and bring down, in vnc "
+	@printf "\033[37m%-30s\033[0m %s\n" "#   open: http://localhost:${VNC_PORT}/vnc.html "
 	@printf "\033[37m%-30s\033[0m %s\n" "#----------------------------------------------------------------------------------------"
 	@echo 
 	@printf "\033[37m%-30s\033[0m %s\n" "#-target-----------------------description-----------------------------------------------"
