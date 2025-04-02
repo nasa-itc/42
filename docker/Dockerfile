@@ -1,60 +1,84 @@
-
 ARG REGISTRY_HOST=docker.io
 ARG IMAGE_USERNAME=library
 ARG IMAGE_NAME=ubuntu
-ARG IMAGE_TAG=24.04
-
+ARG IMAGE_TAG=25.04
 ARG IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
 
 ARG GIT_URL=https://github.com/ericstoneking/42.git
 ARG GIT_BRANCH=master
 
 ################################################################################
-FROM ${IMAGE_URI} as fortytwo-base
+FROM ${IMAGE_URI}
 ################################################################################
-ARG OS_BASE
-ARG OS_IMAGE_URI
-
-#---
 ARG GIT_URL
 ARG GIT_BRANCH
 
 ENV GIT_URL=${GIT_URL}
 ENV GIT_BRANCH=${GIT_BRANCH}
-#---
 
-#---
-RUN apt-get update 
-RUN apt install -y x11vnc x11-apps xvfb novnc net-tools xdotool openbox menu git
+# TODO: runs as root inside of docker (NOT SECURE. USE AT YOUR OWN RISK)
+ENV USER=root
+ENV PASSWORD=0123456789
 
-# Source: https://github.com/gklingler/docker3d/blob/master/ubuntuWithOpenSourceDrivers/Dockerfile
-#  with hardware accelerated OpenGL support.
-# RUN apt-get install -y mesa-utils
-# RUN apt-get install -y xserver-xorg-video-all
-#---
+RUN apt-get update && \
+    apt-get install -y \
+      gnupg \
+      wget \
+      apt-transport-https \
+      software-properties-common \
+      novnc \
+      websockify \
+      libxv1 \
+      libglu1-mesa \
+      xauth \
+      x11-utils \
+      xorg \
+      tightvncserver && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y build-essential
-RUN apt-get install -y freeglut3-dev
-#freeglut-devel
+# turbovnc: https://turbovnc.org/
+RUN wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey |  gpg --dearmor >/etc/apt/trusted.gpg.d/TurboVNC.gpg
+RUN wget -P /etc/apt/sources.list.d/ https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
 
-################################################################################
-FROM fortytwo-base as fortytwo-dev
-################################################################################
-# make 42
-WORKDIR /opt
-#RUN git clone --recurse-submodules -b ${GIT_BRANCH} -j2 ${GIT_URL}
+# virtualgl: https://virtualgl.org/
+RUN wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey | gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg
+RUN wget -P /etc/apt/sources.list.d/ https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
 
-RUN git clone --recurse-submodules -b nos3-main https://github.com/nasa-itc/42.git
+# Install virtualgl and turbovnc
+RUN apt-get update && \
+    apt-get install -y \
+      virtualgl \
+      turbovnc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/42
-RUN make
+# VNC Config
+RUN mkdir -p ~/.vnc/
+RUN echo $PASSWORD | vncpasswd -f > ~/.vnc/passwd
+RUN chmod 0600 ~/.vnc/passwd
+RUN openssl req -x509 -nodes -newkey rsa:2048 -keyout ~/novnc.pem -out ~/novnc.pem -days 3650 -subj "/C=US/ST=NY/L=NY/O=NY/OU=NY/CN=NY emailAddress=email@example.com"
 
-RUN apt-get install -y curl iputils-ping netcat-traditional tree jq
-################################################################################
-FROM fortytwo-dev as fortytwo
-################################################################################
+# Install and configure Display Manager(s)
+RUN apt-get update && \
+    apt-get install -y fluxbox && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+    # TODO: need to figure out why this is needed
+RUN ln -s /usr/share/xsessions/fluxbox.desktop /usr/share/xsessions/gnome.desktop
+
+# Install tools for git cloning and building
+RUN apt-get update && \
+    apt install -y git make gcc freeglut3-dev vim jq tree htop && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+  
+RUN git clone --recurse-submodules -b ${GIT_BRANCH} -j2 ${GIT_URL}
+RUN cd ./42 && make 
+
 COPY entrypoint.sh /entrypoint.sh
 
-COPY NOS3InOut /opt/42/NOS3InOut
+COPY startapp.sh /startapp.sh
 
-CMD [ "/entrypoint.sh" ]
+CMD ["/entrypoint.sh"]

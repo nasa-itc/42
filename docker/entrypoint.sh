@@ -1,11 +1,10 @@
 #!/bin/bash
 
-export DISPLAY=host.docker.internal:0 
-export XDG_RUNTIME_DIR=/tmp
+/opt/TurboVNC/bin/vncserver -securitytypes tlsnone,x509none,none && \
+websockify -D \
+--web=/usr/share/novnc/ \
+--cert=~/novnc.pem 80 localhost:5901
 
-# nohup openbox-session &
-# nohup ./42 &
-
-xeyes &
+/startapp.sh
 
 tail -f /dev/null
