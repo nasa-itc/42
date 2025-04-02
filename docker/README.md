@@ -4,7 +4,7 @@
 
 `make up`
 
-then in a browser connect to `http://localhost:5801/vnc.html'
+then in a browser connect to http://localhost:5801/vnc.html
 
 ## To bring down 42 do the following:
 
