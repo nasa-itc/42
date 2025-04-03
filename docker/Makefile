@@ -35,6 +35,7 @@ up: | down build ## bring up 42 via docker, in x/vnc system
 	@${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME} \
     --volume ${PWD}/entrypoint.sh:/entrypoint.sh \
+    --volume ${PWD}/startapp.sh:/startapp.sh \
     -p ${VNC_PORT}:80 \
 		${IMAGE_NAME_TAG}
 
