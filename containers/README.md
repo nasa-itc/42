@@ -68,3 +68,17 @@ info                           show info
 stop                           Stop 42's container
 up                             Bring up 42 via podman/docker, in x/vnc system
 ```
+
+## Screenshots
+
+### FluxBox Display Manager:
+
+![alt text](./images/fluxbox.png "FluxBox Display Manager")
+
+### 42 In action:
+
+![alt text](./images/42.png "42 In action")
+
+### FluxBox w/ Right Mouse Click:
+
+![alt text](./images/fluxbox_rightmouseclick.png "FluxBox w/ Right Mouse Click")
