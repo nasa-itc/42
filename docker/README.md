@@ -34,7 +34,7 @@ then in a browser connect to http://localhost:5801/vnc.html and click on 'Connec
 
 `make down CONTAINER_BIN=podman`
 
-### Assumptions that `podman` has been run via:
+### Assumptions about `podman`:
 
 Install `podman` via these instructions https://podman.io/docs/installation and then do the following:
 
