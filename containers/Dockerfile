@@ -2,6 +2,7 @@ ARG REGISTRY_HOST=docker.io
 ARG IMAGE_USERNAME=library
 ARG IMAGE_NAME=ubuntu
 ARG IMAGE_TAG=25.04
+
 ARG IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
 
 ARG GIT_URL=https://github.com/ericstoneking/42.git
@@ -16,7 +17,7 @@ ARG GIT_BRANCH
 ENV GIT_URL=${GIT_URL}
 ENV GIT_BRANCH=${GIT_BRANCH}
 
-# TODO: runs as root inside of docker (NOT SECURE. USE AT YOUR OWN RISK)
+# runs as root inside of the container. This can be changed.
 ENV USER=root
 ENV PASSWORD=0123456789
 
@@ -61,7 +62,8 @@ RUN openssl req -x509 -nodes -newkey rsa:2048 -keyout ~/novnc.pem -out ~/novnc.p
 
 # Install and configure Display Manager(s)
 RUN apt-get update && \
-    apt-get install -y fluxbox && \
+    apt-get install -y \
+      fluxbox && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

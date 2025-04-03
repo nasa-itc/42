@@ -5,54 +5,61 @@
 SHELL=bash
 export DIFF_PROGRAM:=vimdiff
 
-# Containerization Parameters (in future podman will useable)
-export CONTAINER_BIN=docker
+# Containerization Parameters
+export CONTAINER_BIN=podman
 export CONTAINER_COMPOSE=${CONTAINER_BIN} compose
 export DEFAULT_IMAGE_REGISTRY=docker.io/library/
+
 export DOCKERFILE=./Dockerfile
 
 # git repo to clone inside of Dockerfile
 GIT_URL=https://github.com/ericstoneking/42.git
+GIT_REPO=$(shell basename $(GIT_URL) .git)
 GIT_BRANCH=master
 
 # Docker/podman config
-IMAGE_NAME=42
+IMAGE_NAME=${GIT_REPO}
 IMAGE_TAG=${GIT_BRANCH}
 IMAGE_NAME_TAG=${IMAGE_NAME}:${IMAGE_TAG}
-CONTAINER_NAME=42
+CONTAINER_NAME=$(GIT_REPO)
 
 # vnc configurations
 VNC_PORT=5801
 
-build: ## Build 42 docker image
+build: ## Build 42 podman/docker image
 	@${CONTAINER_BIN} build \
 		--file ${DOCKERFILE} \
 		--build-arg GIT_URL=${GIT_URL} \
 		--build-arg GIT_BRANCH=${GIT_BRANCH} \
-		-t ${IMAGE_NAME_TAG} .
+		--tag ${IMAGE_NAME_TAG} .
 
-up: | down build ## bring up 42 via docker, in x/vnc system
+up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 	@${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME} \
-    --volume ${PWD}/entrypoint.sh:/entrypoint.sh \
-    --volume ${PWD}/startapp.sh:/startapp.sh \
-    -p ${VNC_PORT}:80 \
+		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
+		--volume ${PWD}/startapp.sh:/startapp.sh \
+		-p ${VNC_PORT}:80 \
 		${IMAGE_NAME_TAG}
 
-down: ## Bring down 42
+down: ## Bring down 42 container
 	@${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
 	@${CONTAINER_BIN} rm ${CONTAINER_NAME} || true
 
-clean: ## clean up: stop, and remove container and delete 42's image
-  ${CONTAINER_BIN} stop ${CONTAINER_NAME} || true && \
-  ${CONTAINER_BIN} rm ${CONTAINER_NAME} || true && \
-  ${CONTAINER_BIN} rmi ${IMAGE_NAME_TAG} || true
+clean: ## Clean up: stop, and remove container and delete 42's image
+	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true && \
+	${CONTAINER_BIN} rm ${CONTAINER_NAME} || true && \
+	${CONTAINER_BIN} rmi ${IMAGE_NAME_TAG} || true
 
-delete: ## delete 42's image
-  ${CONTAINER_BIN} rmi ${IMAGE_NAME_TAG}
+stop: ## Stop 42's container
+	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
+
+delete: stop ## Delete 42's image
+	${CONTAINER_BIN} rmi ${IMAGE_NAME_TAG}
 
 info: ## show info
+	@echo
 	@echo "open browser to http://localhost:${VNC_PORT}/vnc.html and click on 'Connect'"
+	@echo
 
 #---
 RESET  = \033[0m
