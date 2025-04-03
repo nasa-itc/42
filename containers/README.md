@@ -48,3 +48,23 @@ After a few minutes have a browser open http://localhost:5801/vnc.html and click
 #### Bring down `docker`'s 42 container:
 
 `make down CONTAINER_BIN=docker`
+
+## To see all available `make` targets:
+
+run `make` with no arguments, which returns
+
+```bash
+#---------------------------------------------------------------------------------------- 
+# This Makefile can be used to run build, bring up, and bring down, in vnc  
+#   open: http://localhost:5801/vnc.html  
+#---------------------------------------------------------------------------------------- 
+
+#-target-----------------------description----------------------------------------------- 
+build                          Build 42 podman/docker image
+clean                          Clean up: stop, and remove container and delete 42's image
+delete                         Delete 42's image
+down                           Bring down 42 container
+info                           show info
+stop                           Stop 42's container
+up                             Bring up 42 via podman/docker, in x/vnc system
+```
