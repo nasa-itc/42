@@ -21,6 +21,8 @@ ENV GIT_BRANCH=${GIT_BRANCH}
 ENV USER=root
 ENV PASSWORD=0123456789
 
+# TODO: add LABELs
+
 RUN apt-get update && \
     apt-get install -y \
       gnupg \

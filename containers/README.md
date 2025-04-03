@@ -51,7 +51,7 @@ After a few minutes have a browser open http://localhost:5801/vnc.html and click
 
 ## To see all available `make` targets:
 
-run `make` with no arguments, which returns
+run `make` with no arguments to return all options
 
 ```bash
 #---------------------------------------------------------------------------------------- 
