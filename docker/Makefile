@@ -1,13 +1,13 @@
 .DEFAULT_GOAL := help
 
-.PHONY:
+.PHONY: clean delete
 
 SHELL=bash
 export DIFF_PROGRAM:=vimdiff
 
 # Containerization Parameters (in future podman will useable)
 export CONTAINER_BIN=docker
-export CONTAINER_COMPOSE=docker compose
+export CONTAINER_COMPOSE=${CONTAINER_BIN} compose
 export DEFAULT_IMAGE_REGISTRY=docker.io/library/
 export DOCKERFILE=./Dockerfile
 
