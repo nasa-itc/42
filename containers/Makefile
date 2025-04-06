@@ -15,35 +15,39 @@ export DOCKERFILE=./Dockerfile
 # git repo to clone inside of Dockerfile
 GIT_URL=https://github.com/ericstoneking/42.git
 GIT_REPO=$(shell basename $(GIT_URL) .git)
-GIT_BRANCH=master
+GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
 # Docker/podman config
+REGISTRY_HOST=localhost
+IMAGE_USERNAME=library
 IMAGE_NAME=${GIT_REPO}
 IMAGE_TAG=${GIT_BRANCH}
-IMAGE_NAME_TAG=${IMAGE_NAME}:${IMAGE_TAG}
+IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+
 CONTAINER_NAME=$(GIT_REPO)
 
 # vnc configurations
-VNC_PORT=5801
+EXTERNAL_VNC_PORT=5801
+INTERNAL_PORT=80
 
 build: ## Build 42 podman/docker image
-	@${CONTAINER_BIN} build \
+	${CONTAINER_BIN} build \
 		--file ${DOCKERFILE} \
 		--build-arg GIT_URL=${GIT_URL} \
 		--build-arg GIT_BRANCH=${GIT_BRANCH} \
-		--tag ${IMAGE_NAME_TAG} .
+		--tag ${IMAGE_URI} .
 
 up: | down build ## Bring up 42 via podman/docker, in x/vnc system
-	@${CONTAINER_BIN} run -d --rm \
+	${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME} \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
-		-p ${VNC_PORT}:80 \
-		${IMAGE_NAME_TAG}
+		-p ${EXTERNAL_VNC_PORT}:${INTERNAL_PORT} \
+		${IMAGE_URI}
 
 down: ## Bring down 42 container
-	@${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
-	@${CONTAINER_BIN} rm ${CONTAINER_NAME} || true
+	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
+	${CONTAINER_BIN} rm ${CONTAINER_NAME} || true
 
 clean: ## Clean up: stop, and remove container and delete 42's image
 	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true && \
@@ -53,7 +57,7 @@ clean: ## Clean up: stop, and remove container and delete 42's image
 stop: ## Stop 42's container
 	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
 
-delete: stop ## Delete 42's image
+delete: stop ## Delete 42's local image
 	${CONTAINER_BIN} rmi ${IMAGE_NAME_TAG}
 
 info: ## show info
