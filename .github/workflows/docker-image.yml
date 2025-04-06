@@ -38,9 +38,9 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./containers
+          context: containers
           load: true
-          tags: ${{ env.REGISTRY }}/haisamido/x-vnc:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/haisamido/42-x-vnc:${{ github.sha }}
 
       - name: Push Docker Image
         uses: docker/build-push-action@v5
