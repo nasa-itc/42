@@ -8,6 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_NAME: 42-x-vnc
 
 jobs:
 
@@ -40,12 +41,12 @@ jobs:
         with:
           context: containers
           load: true
-          tags: ${{ env.REGISTRY }}/haisamido/42-x-vnc:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: containers
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
