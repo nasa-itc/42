@@ -39,7 +39,7 @@ jobs:
       - name: Build & Push Docker Image(s)
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: containers
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
