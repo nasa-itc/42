@@ -36,18 +36,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
 
-      - name: Build Docker Image
+      - name: Build & Push Docker Image(s)
         uses: docker/build-push-action@v5
         with:
-          context: containers
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: containers
+          context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
