@@ -17,18 +17,19 @@ GIT_URL=https://github.com/ericstoneking/42.git
 GIT_REPO=$(shell basename $(GIT_URL) .git)
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
-# Docker/podman config
-REGISTRY_HOST=localhost
-IMAGE_USERNAME=library
-IMAGE_NAME=${GIT_REPO}
-IMAGE_TAG=${GIT_BRANCH}
-IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
-
-CONTAINER_NAME=$(GIT_REPO)
-
 # vnc configurations
 EXTERNAL_VNC_PORT=5801
 INTERNAL_PORT=80
+
+# Docker/podman config
+IMAGE_SUFFIX=-x-vnc
+REGISTRY_HOST=localhost
+IMAGE_USERNAME=library
+IMAGE_NAME=${GIT_REPO}${IMAGE_SUFFIX}
+IMAGE_TAG=${GIT_BRANCH}
+IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+
+CONTAINER_NAME=$(GIT_REPO)${IMAGE_SUFFIX}-${EXTERNAL_VNC_PORT}
 
 build: ## Build 42 podman/docker image
 	${CONTAINER_BIN} build \
@@ -45,7 +46,8 @@ up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 		--volume ${PWD}/startapp.sh:/startapp.sh \
 		--volume ${PWD}/../:/42 \
 		-p ${EXTERNAL_VNC_PORT}:${INTERNAL_PORT} \
-		${IMAGE_URI}
+		${IMAGE_URI} && \
+		$(MAKE) info
 
 down: ## Bring down 42 container
 	${CONTAINER_BIN} stop ${CONTAINER_NAME} || true
@@ -64,7 +66,7 @@ delete: stop ## Delete 42's local image
 
 info: ## show info
 	@echo
-	@echo "open browser to http://localhost:${VNC_PORT}/vnc.html and click on 'Connect'"
+	@echo "open browser to http://localhost:${EXTERNAL_VNC_PORT}/vnc.html and click on 'Connect'"
 	@echo
 
 #---
