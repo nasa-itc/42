@@ -44,6 +44,7 @@ up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
 		--volume ${PWD}/../:/42 \
+		--volume ${PWD}/${DOCKERFILE}:/Dockerfile \
 		-p ${EXTERNAL_VNC_PORT}:${INTERNAL_PORT} \
 		${IMAGE_URI}
 
