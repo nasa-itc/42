@@ -40,8 +40,10 @@ build: ## Build 42 podman/docker image
 up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 	${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME} \
+		--volume ${HOME}/.ssh:/root/.ssh \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
+		--volume ${PWD}/../:/42 \
 		-p ${EXTERNAL_VNC_PORT}:${INTERNAL_PORT} \
 		${IMAGE_URI}
 
