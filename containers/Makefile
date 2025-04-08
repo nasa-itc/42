@@ -31,12 +31,29 @@ IMAGE_URI=${REGISTRY_HOST}/${IMAGE_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
 
 CONTAINER_NAME=$(GIT_REPO)${IMAGE_SUFFIX}-${EXTERNAL_VNC_PORT}
 
+# Publicly warehoused pre-built image
+IMAGE_URI_PREBUILT=ghcr.io/haisamido/42-x-vnc:latest
+EXTERNAL_VNC_PORT_PB=15801
+CONTAINER_NAME_PB=$(GIT_REPO)${IMAGE_SUFFIX}-${EXTERNAL_VNC_PORT_PB}
+
 build: ## Build 42 podman/docker image
 	${CONTAINER_BIN} build \
 		--file ${DOCKERFILE} \
 		--build-arg GIT_URL=${GIT_URL} \
 		--build-arg GIT_BRANCH=${GIT_BRANCH} \
 		--tag ${IMAGE_URI} .
+
+up-prebuilt: ## Bring up 42 from a pre-built image from a remote registry
+	$(MAKE) down CONTAINER_NAME=${CONTAINER_NAME_PB}
+	${CONTAINER_BIN} run -d --rm \
+		--name ${CONTAINER_NAME_PB} \
+		--volume ${HOME}/.ssh:/root/.ssh \
+		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
+		--volume ${PWD}/startapp.sh:/startapp.sh \
+		--volume ${PWD}/../:/42 \
+		-p ${EXTERNAL_VNC_PORT_PB}:${INTERNAL_PORT} \
+		${IMAGE_URI_PREBUILT} && \
+		$(MAKE) info EXTERNAL_VNC_PORT=${EXTERNAL_VNC_PORT_PB}
 
 up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 	${CONTAINER_BIN} run -d --rm \
