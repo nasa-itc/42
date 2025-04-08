@@ -22,7 +22,7 @@ jobs:
       
   build-ubuntu-glut:
     # Ubuntu build with GLUT graphics
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-25.04
     steps:
     - uses: actions/checkout@v2
     - name: install dep
@@ -32,7 +32,7 @@ jobs:
       
   build-ubuntu-no-graphics:
     # Ubuntu build with all graphics disabled
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-25.04
     steps:
     - uses: actions/checkout@v2
     - name: make
