@@ -22,7 +22,7 @@ EXTERNAL_VNC_PORT=5801
 INTERNAL_PORT=80
 
 # Docker/podman config
-IMAGE_SUFFIX=-x-vnc
+IMAGE_SUFFIX=
 REGISTRY_HOST=localhost
 IMAGE_USERNAME=library
 IMAGE_NAME=${GIT_REPO}${IMAGE_SUFFIX}
@@ -43,6 +43,7 @@ up-prebuilt: ## Bring up 42 from a pre-built image from a remote registry
 	$(MAKE) down CONTAINER_NAME=${CONTAINER_NAME_PB}
 	${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME_PB} \
+		--hostname ${CONTAINER_NAME_PB} \
 		--volume ${HOME}/.ssh:/root/.ssh \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
@@ -61,6 +62,7 @@ build: ## Build 42 podman/docker image
 up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 	${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME} \
+		--hostname ${CONTAINER_NAME} \
 		--volume ${HOME}/.ssh:/root/.ssh \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
