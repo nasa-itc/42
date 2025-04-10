@@ -39,12 +39,13 @@ CONTAINER_NAME_PB=$(GIT_REPO)${IMAGE_SUFFIX}-${EXTERNAL_VNC_PORT_PB}
 pull-prebuilt: ## Pull pre-built 42-x-vnc image
 	${CONTAINER_BIN} pull ${IMAGE_URI_PREBUILT}
 
-up-prebuilt: ## Bring up 42 from a pre-built image from a remote registry
+up-prebuilt: pull-prebuilt ## Bring up 42 from a pre-built image from a remote registry
 	$(MAKE) down CONTAINER_NAME=${CONTAINER_NAME_PB}
 	${CONTAINER_BIN} run -d --rm \
 		--name ${CONTAINER_NAME_PB} \
 		--hostname ${CONTAINER_NAME_PB} \
 		--volume ${HOME}/.ssh:/root/.ssh \
+		--volume ${HOME}/.gitconfig:/root/.gitconfig \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
 		--volume ${PWD}/../:/42 \
@@ -64,6 +65,7 @@ up: | down build ## Bring up 42 via podman/docker, in x/vnc system
 		--name ${CONTAINER_NAME} \
 		--hostname ${CONTAINER_NAME} \
 		--volume ${HOME}/.ssh:/root/.ssh \
+		--volume ${HOME}/.gitconfig:/root/.gitconfig \
 		--volume ${PWD}/entrypoint.sh:/entrypoint.sh \
 		--volume ${PWD}/startapp.sh:/startapp.sh \
 		--volume ${PWD}/../:/42 \
