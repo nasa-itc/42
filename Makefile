@@ -78,7 +78,8 @@ ifeq ($(42PLATFORM),__APPLE__)
    EXTERNDIR =
    # ARCHFLAG = -arch i386
    # ARCHFLAG = -arch x86_64
-   ARCHFLAG = -arch arm64
+   # ARCHFLAG = -arch arm64
+   ARCHFLAG = -arch $(shell uname -m)
    # For graphics interface, choose GLUT or GLFW GUI libraries
    # GLUT is well known, but GLFW is better for newer Mac's hires displays
    # OSX fixed their hires GLUT issue.  Keep GLFW around just in case.
