@@ -24,8 +24,8 @@ KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name ${K8S_CLUSTER} || t
 KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name ${K8S_CLUSTER}
 
 # add the prefix since podman adds kind- to contexts/clusters
-K8S_CONTEXT_PRIFIX=kind-
-K8S_CONTEXT=${K8S_CONTEXT_PRIFIX}${K8S_CONTEXT}
+K8S_CONTEXT_PREFIX=kind-
+K8S_CONTEXT=${K8S_CONTEXT_PREFIX}${K8S_CONTEXT}
 
 # set and use context
 kubectl config set-context ${K8S_CONTEXT}
@@ -39,7 +39,7 @@ kubectl delete namespace ${K8S_NAMESPACE} --context ${K8S_CONTEXT} || true
 kubectl create namespace ${K8S_NAMESPACE} --context ${K8S_CONTEXT}
 
 # deployment
-K8S_DEPLOYMENT=${K8S_NAMESPACE}
+K8S_DEPLOYMENT=${K8S_POD}
 
 kubectl delete deployment ${K8S_DEPLOYMENT} --context ${K8S_CONTEXT} --namespace ${K8S_NAMESPACE} || true
 kubectl create deployment ${K8S_DEPLOYMENT} --context ${K8S_CONTEXT} --namespace ${K8S_NAMESPACE} \
