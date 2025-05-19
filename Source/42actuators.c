@@ -68,7 +68,7 @@ void WhlModel(struct WhlType *W,struct SCType *S)
       if (S->FlexActive) {
          B = &S->B[W->Body];
          N = &B->Node[W->Node];
-         for(i=0;i<3;i++) N->Trq[i] += W->Trq*W->A[i];
+         for(i=0;i<3;i++) N->Trq[i] -= W->Trq*W->A[i];
       }
 
 }
@@ -142,7 +142,7 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
       struct ThrType *T;
       struct BodyType *B,*Bt;
       struct NodeType *Nt;
-      struct GeomType *G;
+      struct MeshType *M;
       struct PolyType *P;
       double PosThrN[3],PosThrB[3],AxisN[3],CPB[3][3];
       double AoN,PosB[3],PosP[3],MagPos,Phat[3],cosphi;
@@ -159,7 +159,7 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
             /* Find Force and Torque on each Body */
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
-               G = &Geom[B->GeomTag];
+               M = &Mesh[B->MeshTag];
 
                /* Find thruster location, axis in B */
                MTxV(Bt->CN,Nt->PosB,PosThrN);
@@ -173,8 +173,8 @@ void ThrusterPlumeFrcTrq(struct SCType *S)
                PerpBasis(CPB[0],CPB[1],CPB[2]);
 
                /* Find force and torque on each illuminated polygon */
-               for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
-                  P = &G->Poly[Ipoly];
+               for(Ipoly=0;Ipoly<M->Npoly;Ipoly++) {
+                  P = &M->Poly[Ipoly];
                   if (strcmp(Matl[P->Matl].Label,"INTERIOR")) { /* Plume doesn't see interior polys */
                      AoN = VoV(CPB[0],P->Norm);
                      if (AoN < 0.0) {  /* Plume doesn't see polys facing away */

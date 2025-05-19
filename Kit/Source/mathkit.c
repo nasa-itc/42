@@ -334,7 +334,7 @@ double UNITV(double V[3])
          V[2]/=A;
       }
       else {
-         printf("Attempted divide by zero in UNITV (Line %d of mathkit.c)\n",__LINE__);
+         printf("Attempted divide by zero in UNITV (mathkit.c:%d)\n",__LINE__);
          V[0] = 0.0;
          V[1] = 0.0;
          V[2] = 0.0;
@@ -354,7 +354,7 @@ double CopyUnitV(double V[3], double W[3])
          W[2] = V[2]/A;
       }
       else {
-         printf("Attempted divide by zero in COPYUNITV (Line %d of mathkit.c)\n",__LINE__);
+         printf("Attempted divide by zero in COPYUNITV (mathkit.c:%d)\n",__LINE__);
          W[0] = 0.0;
          W[1] = 0.0;
          W[2] = 0.0;

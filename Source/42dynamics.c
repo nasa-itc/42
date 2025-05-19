@@ -1902,14 +1902,16 @@ void KaneNBodyEOM(double *u, double *x, double *h, double *a,
       }
 
 /* .. Solve EOM */
-      //EchoPVel(S);
-      //EchoRemAcc(S);
-      //if (First) {
-      //   First = 0;
-      //   EchoEOM(D->COEF,D->ActiveState,D->RHS,D->Ns); 
-      //}
+/*
+      EchoPVel(S);
+      EchoRemAcc(S);
+      if (First) {
+         First = 0;
+         EchoEOM(D->COEF,D->ActiveState,D->RHS,D->Ns); 
+      }
+*/
       LINSOLVE(D->COEF,D->ActiveState,D->RHS,D->Ns);
-      //EchoUdot(D->ActiveState,D->Ns);
+      /* EchoUdot(D->ActiveState,D->Ns); */
 
 /* .. Map out result */
       if(D->SomeJointsLocked) {
@@ -3927,12 +3929,12 @@ void PolyhedronCowellRK4(struct SCType *S)
       long j;
       struct OrbitType *O;
       struct WorldType *W;
-      struct GeomType *G;
+      struct MeshType *M;
       double GravAccN[3];
 
       O = &Orb[S->RefOrb];
       W = &World[O->World];
-      G = &Geom[W->GeomTag];
+      M = &Mesh[W->MeshTag];
 
       u[0] = S->PosN[0];
       u[1] = S->PosN[1];
@@ -3942,19 +3944,19 @@ void PolyhedronCowellRK4(struct SCType *S)
       u[5] = S->VelN[2];
 
 /* .. 4th Order Runga-Kutta Integration */
-      PolyhedronGravAcc(G,W->Density,u,W->CWN,GravAccN);
+      PolyhedronGravAcc(M,W->Density,u,W->CWN,GravAccN);
       PolyhedronCowellEOM( u, m1, S->mass, GravAccN, S->FrcN);
       for(j=0;j<6;j++) uu[j] = u[j] + 0.5*DTSIM*m1[j];
       
-      PolyhedronGravAcc(G,W->Density,uu,W->CWN,GravAccN);
+      PolyhedronGravAcc(M,W->Density,uu,W->CWN,GravAccN);
       PolyhedronCowellEOM(uu, m2, S->mass, GravAccN, S->FrcN);
       for(j=0;j<6;j++) uu[j] = u[j] + 0.5*DTSIM*m2[j];
     
-      PolyhedronGravAcc(G,W->Density,uu,W->CWN,GravAccN);
+      PolyhedronGravAcc(M,W->Density,uu,W->CWN,GravAccN);
       PolyhedronCowellEOM(uu, m3, S->mass, GravAccN, S->FrcN);
       for(j=0;j<6;j++) uu[j] = u[j] + DTSIM*m3[j];
       
-      PolyhedronGravAcc(G,W->Density,uu,W->CWN,GravAccN);
+      PolyhedronGravAcc(M,W->Density,uu,W->CWN,GravAccN);
       PolyhedronCowellEOM(uu, m4, S->mass, GravAccN, S->FrcN);
       for(j=0;j<6;j++) u[j]+=DTSIM/6.0*(m1[j]+2.0*(m2[j]+m3[j])+m4[j]);
 
@@ -4228,7 +4230,7 @@ void Dynamics(struct SCType *S)
       O = &Orb[S->RefOrb];
 
 
-      //if (S->Nb > 1) {
+      /* if (S->Nb > 1) { */
          switch(S->DynMethod) {
             case DYN_GAUSS_ELIM :
                KaneNBodyRK4(S);
@@ -4241,8 +4243,8 @@ void Dynamics(struct SCType *S)
                exit(1);
             
          }
-      //}
-      //else OneBodyRK4(S);
+      /* } */
+      /* else OneBodyRK4(S); */
 
       switch(O->Regime) {
          case ORB_ZERO :

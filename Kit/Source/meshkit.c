@@ -12,7 +12,7 @@
 /*    All Other Rights Reserved.                                      */
 
 
-#include "geomkit.h"
+#include "meshkit.h"
 
 /* #ifdef __cplusplus
 ** namespace Kit {
@@ -146,7 +146,7 @@ void ScaleSpecDiffFrac(struct MatlType *Matl, long Nmatl)
       }
 }
 /*********************************************************************/
-void SurfaceForceProps(struct GeomType *G)
+void SurfaceForceProps(struct MeshType *M)
 {
       double **uv;
       double uhat[3],v2[3],nhat[3],vhat[3];
@@ -157,15 +157,15 @@ void SurfaceForceProps(struct GeomType *G)
       long j;
       struct PolyType *P;
 
-      for(Ip=0;Ip<G->Npoly;Ip++) {
-         P = &G->Poly[Ip];
+      for(Ip=0;Ip<M->Npoly;Ip++) {
+         P = &M->Poly[Ip];
 
          uv = CreateMatrix(P->Nv+1,3);
 
          /* Compute Unit Normal Vector */
          for(j=0;j<3;j++) {
-            uhat[j] = G->V[P->V[1]][j] - G->V[P->V[0]][j];
-            v2[j]   = G->V[P->V[2]][j] - G->V[P->V[1]][j];
+            uhat[j] = M->V[P->V[1]][j] - M->V[P->V[0]][j];
+            v2[j]   = M->V[P->V[2]][j] - M->V[P->V[1]][j];
          }
          UNITV(uhat);
          VxV(uhat,v2,nhat);
@@ -189,8 +189,8 @@ void SurfaceForceProps(struct GeomType *G)
             C[1][j] = vhat[j];
             C[2][j] = nhat[j];
          }
-         for(j=0;j<P->Nv;j++) MxV(C,G->V[P->V[j]],uv[j]);
-         MxV(C,G->V[P->V[0]],uv[P->Nv]);
+         for(j=0;j<P->Nv;j++) MxV(C,M->V[P->V[j]],uv[j]);
+         MxV(C,M->V[P->V[0]],uv[P->Nv]);
          P->Area = 0.0;
          uvbar[0] = 0.0;
          uvbar[1] = 0.0;
@@ -225,7 +225,7 @@ void SurfaceForceProps(struct GeomType *G)
 }
 /*********************************************************************/
 /* Ref Werner and Scheeres, "Exterior Gravitation of a Polyhedron ..." */
-void EdgeAndPolyDyads(struct GeomType *G)
+void EdgeAndPolyDyads(struct MeshType *M)
 {
       struct EdgeType *E;
       struct PolyType *P1,*P2,*P;
@@ -233,13 +233,13 @@ void EdgeAndPolyDyads(struct GeomType *G)
       double Axis[3],N1[3],N2[3];
       long Ie,Ip,i,j;
 
-      for(Ie=0;Ie<G->Nedge;Ie++) {
-         E = &G->Edge[Ie];
+      for(Ie=0;Ie<M->Nedge;Ie++) {
+         E = &M->Edge[Ie];
          if (E->Poly2 >= 0) {
-            P1 = &G->Poly[E->Poly1];
-            P2 = &G->Poly[E->Poly2];
-            V1 = G->V[E->Vtx1];
-            V2 = G->V[E->Vtx2];
+            P1 = &M->Poly[E->Poly1];
+            P2 = &M->Poly[E->Poly2];
+            V1 = M->V[E->Vtx1];
+            V2 = M->V[E->Vtx2];
             for(i=0;i<3;i++) Axis[i] = V2[i]-V1[i];
             UNITV(Axis);
             /* Unit vectors in plane, pointing outward */
@@ -255,8 +255,8 @@ void EdgeAndPolyDyads(struct GeomType *G)
          }
       }
       
-      for(Ip=0;Ip<G->Npoly;Ip++) {
-         P = &G->Poly[Ip];
+      for(Ip=0;Ip<M->Npoly;Ip++) {
+         P = &M->Poly[Ip];
          for(i=0;i<3;i++) {
             for(j=0;j<3;j++) {
                P->Dyad[i][j] = P->Norm[i]*P->Norm[j];
@@ -265,7 +265,7 @@ void EdgeAndPolyDyads(struct GeomType *G)
       }
 }
 /*********************************************************************/
-double PolyhedronVolume(struct GeomType *G)
+double PolyhedronVolume(struct MeshType *M)
 {
       double Vol;
       struct PolyType *P;
@@ -274,11 +274,11 @@ double PolyhedronVolume(struct GeomType *G)
       long Ip;
       
       Vol = 0.0;
-      for(Ip=0;Ip<G->Npoly;Ip++) {
-         P = &G->Poly[Ip];
-         V1 = G->V[P->V[0]];
-         V2 = G->V[P->V[1]];
-         V3 = G->V[P->V[2]];
+      for(Ip=0;Ip<M->Npoly;Ip++) {
+         P = &M->Poly[Ip];
+         V1 = M->V[P->V[0]];
+         V2 = M->V[P->V[1]];
+         V3 = M->V[P->V[2]];
          VxV(V2,V3,V2xV3);
          Vol += VoV(V1,V2xV3)/6.0;
       }
@@ -379,7 +379,7 @@ long RayHitsBBox(double Source[3],double DirVec[3],
 }
 /**********************************************************************/
 long KDRayHitsLeaf(double Source[3], double DirVec[3],
-   struct KDNodeType *KD, struct GeomType *G,
+   struct KDNodeType *KD, struct MeshType *M,
    long *HitPoly, double HitPoint[3], double *HitDist)
 {
       struct PolyType *P;
@@ -391,10 +391,10 @@ long KDRayHitsLeaf(double Source[3], double DirVec[3],
       Hit = 0;
 
       for(Ip=0;Ip<KD->Npoly;Ip++) {
-         P = &G->Poly[KD->Poly[Ip]];
+         P = &M->Poly[KD->Poly[Ip]];
          Vtx = (double **) calloc(P->Nv,sizeof(double *));
          for(Iv=0;Iv<P->Nv;Iv++) {
-            Vtx[Iv] = G->V[P->V[Iv]];
+            Vtx[Iv] = M->V[P->V[Iv]];
          }
          if (ProjectPointOntoPoly(Source,DirVec,Vtx,P->Nv,
             ProjPoint,&Dist)) {
@@ -412,20 +412,20 @@ long KDRayHitsLeaf(double Source[3], double DirVec[3],
 }
 /**********************************************************************/
 long KDRayHitsNode(double Source[3], double DirVec[3], struct KDNodeType *KD,
-   struct GeomType *G, long *HitPoly, double HitPoint[3], double *HitDist)
+   struct MeshType *M, long *HitPoly, double HitPoint[3], double *HitDist)
 {
       long HitLow,HitHigh;
       long Hit = 0;
 
       if (RayHitsBBox(Source,DirVec,&KD->BB)) {
          if(KD->IsLeaf) {
-            Hit = KDRayHitsLeaf(Source,DirVec,KD,G,
+            Hit = KDRayHitsLeaf(Source,DirVec,KD,M,
                HitPoly,HitPoint,HitDist);
          }
          else { /* Recursively check child nodes */
-            HitLow = KDRayHitsNode(Source,DirVec,KD->LowChild,G,
+            HitLow = KDRayHitsNode(Source,DirVec,KD->LowChild,M,
                HitPoly,HitPoint,HitDist);
-            HitHigh = KDRayHitsNode(Source,DirVec,KD->HighChild,G,
+            HitHigh = KDRayHitsNode(Source,DirVec,KD->HighChild,M,
                HitPoly,HitPoint,HitDist);
             Hit = HitLow || HitHigh;
          }
@@ -433,31 +433,31 @@ long KDRayHitsNode(double Source[3], double DirVec[3], struct KDNodeType *KD,
       return(Hit);
 }
 /**********************************************************************/
-/* Source and DirVec must be expressed in G's coordinate system       */
-long KDProjectRayOntoGeom(double Source[3], double DirVec[3],
-   struct GeomType *G, long *HitPoly, double HitPoint[3])
+/* Source and DirVec must be expressed in M's coordinate system       */
+long KDProjectRayOntoMesh(double Source[3], double DirVec[3],
+   struct MeshType *M, long *HitPoly, double HitPoint[3])
 {
       double HitDist = 1.0E12; /* Absurd large value */
-      long RayHitsGeom;
+      long RayHitsMesh;
 
-      RayHitsGeom = KDRayHitsNode(Source,DirVec,G->KDTree,G,HitPoly,
+      RayHitsMesh = KDRayHitsNode(Source,DirVec,M->KDTree,M,HitPoly,
          HitPoint,&HitDist);
 
-      return(RayHitsGeom);
+      return(RayHitsMesh);
 }
 /**********************************************************************/
-long KDPartition(long *P, long LowEnd, long HighEnd, long Axis, struct GeomType *G)
+long KDPartition(long *P, long LowEnd, long HighEnd, long Axis, struct MeshType *M)
 {
       long PivotIdx,TempIdx;
       long LowIdx;
       double PivotVal;
 
       PivotIdx = HighEnd;
-      PivotVal = G->Poly[P[HighEnd]].Centroid[Axis];
+      PivotVal = M->Poly[P[HighEnd]].Centroid[Axis];
       LowIdx = LowEnd;
 
       while(LowIdx < PivotIdx) {
-         if (G->Poly[P[LowIdx]].Centroid[Axis] > PivotVal) {
+         if (M->Poly[P[LowIdx]].Centroid[Axis] > PivotVal) {
             TempIdx = P[PivotIdx];
             P[PivotIdx] = P[LowIdx];
             P[LowIdx] = P[PivotIdx-1];
@@ -469,7 +469,7 @@ long KDPartition(long *P, long LowEnd, long HighEnd, long Axis, struct GeomType 
       return(PivotIdx);
 }
 /**********************************************************************/
-long KDSelectMedian(long *P, long N, long Axis, struct GeomType *G)
+long KDSelectMedian(long *P, long N, long Axis, struct MeshType *M)
 {
       long LowEnd,HighEnd,PivotIdx;
 
@@ -477,7 +477,7 @@ long KDSelectMedian(long *P, long N, long Axis, struct GeomType *G)
       HighEnd = N-1;
 
       do {
-         PivotIdx = KDPartition(P,LowEnd,HighEnd,Axis,G);
+         PivotIdx = KDPartition(P,LowEnd,HighEnd,Axis,M);
          if (PivotIdx > N/2) HighEnd = PivotIdx-1;
          else if (PivotIdx < N/2) LowEnd = PivotIdx+1;
       } while(PivotIdx != N/2);
@@ -485,16 +485,16 @@ long KDSelectMedian(long *P, long N, long Axis, struct GeomType *G)
       return(PivotIdx);
 }
 /**********************************************************************/
-long KDCompare(long P1, long P2,long Axis,struct GeomType *G)
+long KDCompare(long P1, long P2,long Axis,struct MeshType *M)
 {
-      if (G->Poly[P1].Centroid[Axis] < G->Poly[P2].Centroid[Axis])
+      if (M->Poly[P1].Centroid[Axis] < M->Poly[P2].Centroid[Axis])
          return(-1);
-      else if (G->Poly[P1].Centroid[Axis] > G->Poly[P2].Centroid[Axis])
+      else if (M->Poly[P1].Centroid[Axis] > M->Poly[P2].Centroid[Axis])
          return(1);
       else return(0);
 }
 /**********************************************************************/
-void KDFormHeap(long *P, long L, long Axis, struct GeomType *G)
+void KDFormHeap(long *P, long L, long Axis, struct MeshType *M)
 {
       long Done,k,Temp;
 
@@ -502,7 +502,7 @@ void KDFormHeap(long *P, long L, long Axis, struct GeomType *G)
          Done = 1;
          for(k=0;k<L/2;k++) {
             /* Check against left child (2*k+1) */
-            if (KDCompare(P[k],P[2*k+1],Axis,G) < 0) {
+            if (KDCompare(P[k],P[2*k+1],Axis,M) < 0) {
                Temp = P[k];
                P[k] = P[2*k+1];
                P[2*k+1] = Temp;
@@ -510,7 +510,7 @@ void KDFormHeap(long *P, long L, long Axis, struct GeomType *G)
             }
             /* Check against right child (2*k+2) */
             if (2*k+2 < L) { /* Right child exists */
-               if (KDCompare(P[k],P[2*k+2],Axis,G) < 0) {
+               if (KDCompare(P[k],P[2*k+2],Axis,M) < 0) {
                   Temp = P[k];
                   P[k] = P[2*k+2];
                   P[2*k+2] = Temp;
@@ -521,13 +521,13 @@ void KDFormHeap(long *P, long L, long Axis, struct GeomType *G)
       } while(!Done);
 }
 /**********************************************************************/
-void KDHeapSort(long *Poly, long Npoly, long Axis,struct GeomType *G)
+void KDHeapSort(long *Poly, long Npoly, long Axis,struct MeshType *M)
 {
       long HeapLength;
       long Temp;
 
       /* Form heap so each parent is greater than both children */
-      KDFormHeap(Poly,Npoly,Axis,G);
+      KDFormHeap(Poly,Npoly,Axis,M);
 
       HeapLength = Npoly;
       while (HeapLength > 1) {
@@ -539,11 +539,11 @@ void KDHeapSort(long *Poly, long Npoly, long Axis,struct GeomType *G)
          /* Shorten heap */
          HeapLength--;
          /* Re-form heap */
-         KDFormHeap(Poly,HeapLength,Axis,G);
+         KDFormHeap(Poly,HeapLength,Axis,M);
       }
 }
 /**********************************************************************/
-void SplitKDNode(struct KDNodeType *KD,struct GeomType *G)
+void SplitKDNode(struct KDNodeType *KD,struct MeshType *M)
 {
       struct KDNodeType *LC,*HC;
       struct PolyType *P;
@@ -581,8 +581,8 @@ void SplitKDNode(struct KDNodeType *KD,struct GeomType *G)
       }
 
       /* Split [Axis] BBox along Median Value */
-      MedIdx = KDSelectMedian(KD->Poly,KD->Npoly,Axis,G);
-      MedVal = G->Poly[KD->Poly[MedIdx]].Centroid[Axis];
+      MedIdx = KDSelectMedian(KD->Poly,KD->Npoly,Axis,M);
+      MedVal = M->Poly[KD->Poly[MedIdx]].Centroid[Axis];
       LC->BB.max[Axis] = MedVal;
       HC->BB.min[Axis] = MedVal;
       LC->BB.center[Axis] = 0.5*(LC->BB.max[Axis]+LC->BB.min[Axis]);
@@ -593,9 +593,9 @@ void SplitKDNode(struct KDNodeType *KD,struct GeomType *G)
       for(Ip=0;Ip<KD->Npoly;Ip++) {
          AnyVtxBelowMedian = 0;
          AnyVtxAboveMedian = 0;
-         P = &G->Poly[KD->Poly[Ip]];
+         P = &M->Poly[KD->Poly[Ip]];
          for(Iv=0;Iv<P->Nv;Iv++) {
-            if (G->V[P->V[Iv]][Axis] < MedVal) AnyVtxBelowMedian = 1;
+            if (M->V[P->V[Iv]][Axis] < MedVal) AnyVtxBelowMedian = 1;
             else AnyVtxAboveMedian = 1;
          }
          if (AnyVtxBelowMedian) {
@@ -618,7 +618,7 @@ void SplitKDNode(struct KDNodeType *KD,struct GeomType *G)
          /*printf("Depth exceeds 20.  Npoly = %ld\n",LC->Npoly);*/
          LC->IsLeaf = 1;
       }
-      else SplitKDNode(LC,G);
+      else SplitKDNode(LC,M);
 
       if (HC->Npoly < 20) {
          HC->IsLeaf = 1;
@@ -627,37 +627,37 @@ void SplitKDNode(struct KDNodeType *KD,struct GeomType *G)
          /*printf("Depth exceeds 20.  Npoly = %ld\n",HC->Npoly);*/
          HC->IsLeaf = 1;
       }
-      else SplitKDNode(HC,G);
+      else SplitKDNode(HC,M);
 
 }
 /**********************************************************************/
-void LoadKDTree(struct GeomType *G)
+void LoadKDTree(struct MeshType *M)
 {
 
       struct KDNodeType *KD;
       long i,Ip;
 
-/* .. Root Node coincides with Geom's Bounding Box */
-      G->KDTree = (struct KDNodeType *) calloc(1,sizeof(struct KDNodeType));
-      KD = G->KDTree;
+/* .. Root Node coincides with Mesh's Bounding Box */
+      M->KDTree = (struct KDNodeType *) calloc(1,sizeof(struct KDNodeType));
+      KD = M->KDTree;
       KD->IsRoot = 1;
       KD->IsLeaf = 0;
       KD->Depth = 0;
       KD->Axis = 0;
       for(i=0;i<3;i++) {
-         KD->BB.min[i] = G->BBox.min[i];
-         KD->BB.max[i] = G->BBox.max[i];
-         KD->BB.center[i] = G->BBox.center[i];
+         KD->BB.min[i] = M->BBox.min[i];
+         KD->BB.max[i] = M->BBox.max[i];
+         KD->BB.center[i] = M->BBox.center[i];
       }
       /* Root Node poly list is trivial: */
-      KD->Npoly = G->Npoly;
+      KD->Npoly = M->Npoly;
       KD->Poly = (long *) calloc(KD->Npoly,sizeof(long));
       for(Ip=0;Ip<KD->Npoly;Ip++) KD->Poly[Ip] = Ip;
 
-      SplitKDNode(KD,G);
+      SplitKDNode(KD,M);
 }
 /**********************************************************************/
-void LoadOctree(struct GeomType *G)
+void LoadOctree(struct MeshType *M)
 {
       struct OctreeType *O;
       struct OctreeCellType *OC,*C;
@@ -673,10 +673,10 @@ void LoadOctree(struct GeomType *G)
       long AllPos[3],AllNeg[3];
       long NoChildHasAll;
 
-      BB = &G->BBox;
+      BB = &M->BBox;
 
-      G->Octree = (struct OctreeType *) calloc(1,sizeof(struct OctreeType));
-      O = G->Octree;
+      M->Octree = (struct OctreeType *) calloc(1,sizeof(struct OctreeType));
+      O = M->Octree;
 
 /* .. Assign children */
       Ic=1;
@@ -724,8 +724,8 @@ void LoadOctree(struct GeomType *G)
       }
 
 /* .. Populate with polys */
-      for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
-         P = &G->Poly[Ipoly];
+      for(Ipoly=0;Ipoly<M->Npoly;Ipoly++) {
+         P = &M->Poly[Ipoly];
          Io = 0;
          NoChildHasAll = 0;
          while (Io < 73 && !NoChildHasAll) {
@@ -736,7 +736,7 @@ void LoadOctree(struct GeomType *G)
             }
             NoChildHasAll = 1;
             for(Iv=0;Iv<P->Nv;Iv++) {
-               V = G->V[P->V[Iv]];
+               V = M->V[P->V[Iv]];
                for(i=0;i<3;i++) {
                   if (V[i] < OC->center[i]) AllPos[i] = 0;
                   else AllNeg[i] = 0;
@@ -817,9 +817,9 @@ void LoadOctree(struct GeomType *G)
       }
 }
 /*********************************************************************/
-/* Point and DirVec have already been transformed into Geom frame      */
-long OCProjectRayOntoGeom(double Point[3],double DirVec[3],
-   struct GeomType *G,double ProjPoint[3],long *ClosestPoly)
+/* Point and DirVec have already been transformed into Mesh frame      */
+long OCProjectRayOntoMesh(double Point[3],double DirVec[3],
+   struct MeshType *M,double ProjPoint[3],long *ClosestPoly)
 {
       struct OctreeType *O;
       struct PolyType *P;
@@ -836,7 +836,7 @@ long OCProjectRayOntoGeom(double Point[3],double DirVec[3],
          Vtx = CreateMatrix(3,3);
       }
 
-      O = G->Octree;
+      O = M->Octree;
 
       for(i=0;i<3;i++) Point2[i] = Point[i] + DirVec[i];
 
@@ -853,13 +853,13 @@ long OCProjectRayOntoGeom(double Point[3],double DirVec[3],
             if (Dist < OC->radius) {
                /* Check against polys */
                for(Ip=0;Ip<OC->Npoly;Ip++) {
-                  P = &G->Poly[OC->Poly[Ip]];
+                  P = &M->Poly[OC->Poly[Ip]];
                   if (P->Nv != 3) {
-                     printf("Error.  ProjectPointOntoGeom doesn't handle polygons with %ld vertices.\n",P->Nv);
+                     printf("Error.  ProjectPointOntoMesh doesn't handle polygons with %ld vertices.\n",P->Nv);
                      exit(1);
                   }
                   for(Iv=0;Iv<P->Nv;Iv++) {
-                     for(i=0;i<3;i++) Vtx[Iv][i] = G->V[P->V[Iv]][i];
+                     for(i=0;i<3;i++) Vtx[Iv][i] = M->V[P->V[Iv]][i];
                   }
                   InPoly = ProjectPointOntoPoly(Point,DirVec,Vtx,P->Nv,Vec,&Dist);
                   if (InPoly && Dist > 0.0 && Dist < MinDist) {
@@ -895,9 +895,9 @@ long OCProjectRayOntoGeom(double Point[3],double DirVec[3],
       return(FoundPoly);
 }
 /*********************************************************************/
-struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilename[40],
+struct MeshType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilename[40],
                        struct MatlType **MatlPtr, long *Nmatl,
-                       struct GeomType *Geom, long *Ngeom, long *GeomTag,
+                       struct MeshType *Mesh, long *Nmesh, long *MeshTag,
                        long EdgesEnabled)
 {
 #define D2R (0.0174532925199433)
@@ -911,7 +911,7 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
       long I,It,In,i,j,MatlIdx;
       long Ivtx,Ivt,Ivn,Ipoly;
       long Ip,Ie;
-      struct GeomType *G;
+      struct MeshType *M;
       struct PolyType *P;
       void *Ptr;
       struct MatlType *Matl;
@@ -929,42 +929,42 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
       char line[512],vtxstring[512],*vtxtoken,MatlName[40];
       char MtlLibName[40];
 
-      Ng = *Ngeom;
+      Ng = *Nmesh;
       Matl = *MatlPtr;
 
       /* Check for prior definition */
       for(Ig=0;Ig<Ng;Ig++) {
-         if (!strcmp(ObjFilename,Geom[Ig].ObjFileName)) {
-            *GeomTag = Ig;
-            return(Geom);
+         if (!strcmp(ObjFilename,Mesh[Ig].ObjFileName)) {
+            *MeshTag = Ig;
+            return(Mesh);
          }
       }
       /* If not defined yet, add to list */
       Ng++;
-      Geom = (struct GeomType *) realloc(Geom,Ng*sizeof(struct GeomType));
-      G = &Geom[Ng-1];
+      Mesh = (struct MeshType *) realloc(Mesh,Ng*sizeof(struct MeshType));
+      M = &Mesh[Ng-1];
 
-      strncpy(G->ObjFileName,ObjFilename,39);
-      G->ObjFileName[39] = 0; /* Null-terminated string */
-      G->Nmatl = 0;
-      G->Nv = 0;
-      G->Nvt = 0;
-      G->Nvn = 0;
-      G->Npoly = 0;
-      G->Nedge = 0;
+      strncpy(M->ObjFileName,ObjFilename,39);
+      M->ObjFileName[39] = 0; /* Null-terminated string */
+      M->Nmatl = 0;
+      M->Nv = 0;
+      M->Nvt = 0;
+      M->Nvn = 0;
+      M->Npoly = 0;
+      M->Nedge = 0;
       MatlIdx = 0;
 
-      /* Allow a Null Geom entry */
-      if (!strcmp(G->ObjFileName,"NONE")) {
-         *Ngeom = Ng;
-         *GeomTag = Ng-1;
-         return(Geom);
+      /* Allow a Null Mesh entry */
+      if (!strcmp(M->ObjFileName,"NONE")) {
+         *Nmesh = Ng;
+         *MeshTag = Ng-1;
+         return(Mesh);
       }
 
       /* These will be expanded as needed */
-      G->Matl = (long *) calloc(2,sizeof(long));
-      if (G->Matl == NULL) {
-         printf("G->Matl calloc returned null pointer.  Bailing out!\n");
+      M->Matl = (long *) calloc(2,sizeof(long));
+      if (M->Matl == NULL) {
+         printf("M->Matl calloc returned null pointer.  Bailing out!\n");
          exit(1);
       }
 
@@ -975,21 +975,21 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
       while(!feof(infile) && NoArraySizesFound) {
          fgets(line,512,infile);
          if (sscanf(line,"# Nv = %ld  Nvt = %ld  Nvn = %ld  Npoly = %ld",
-            &G->Nv,&G->Nvt,&G->Nvn,&G->Npoly) == 4) {
+            &M->Nv,&M->Nvt,&M->Nvn,&M->Npoly) == 4) {
             NoArraySizesFound = 0;
          }
          else if (sscanf(line,"v  %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
-            G->Nv++;
+            M->Nv++;
          }
          else if (sscanf(line,"vt %lf %lf",&V[0],&V[1]) == 2 ||
                   sscanf(line,"vt %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
-            G->Nvt++;
+            M->Nvt++;
          }
          else if (sscanf(line,"vn  %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
-            G->Nvn++;
+            M->Nvn++;
          }
          else if(line[0] == 'f') {
-            G->Npoly++;
+            M->Npoly++;
          }
          sprintf(line,"Flush");
       }
@@ -1006,7 +1006,7 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
             rewind(TmpFile);
             outfile = FileOpen(ModelPath,ObjFilename,"w");
             fprintf(outfile,"# Nv = %ld  Nvt = %ld  Nvn = %ld  Npoly = %ld\n",
-               G->Nv,G->Nvt,G->Nvn,G->Npoly);
+               M->Nv,M->Nvt,M->Nvn,M->Npoly);
             while((txtptr = fgets(line,512,TmpFile)) != NULL) {
                fputs(line,outfile);
             }
@@ -1016,12 +1016,12 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
       }
 
 /* .. Allocate arrays */
-      G->V = CreateMatrix(G->Nv,3);
-      G->Vt = CreateMatrix(G->Nvt,2);
-      G->Vn = CreateMatrix(G->Nvn,3);
-      G->Poly = (struct PolyType *) calloc(G->Npoly,sizeof(struct PolyType));
-      if (G->Poly == NULL) {
-         printf("G->Poly calloc returned null pointer.  Bailing out!\n");
+      M->V = CreateMatrix(M->Nv,3);
+      M->Vt = CreateMatrix(M->Nvt,2);
+      M->Vn = CreateMatrix(M->Nvn,3);
+      M->Poly = (struct PolyType *) calloc(M->Npoly,sizeof(struct PolyType));
+      if (M->Poly == NULL) {
+         printf("M->Poly calloc returned null pointer.  Bailing out!\n");
          exit(1);
       }
 
@@ -1055,13 +1055,13 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
          }
          else if (sscanf(line,"v  %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
             MTxV(RotM,V,Vr);
-            for(i=0;i<3;i++) G->V[Ivtx][i] = Scale*Vr[i]+TransVec[i];
+            for(i=0;i<3;i++) M->V[Ivtx][i] = Scale*Vr[i]+TransVec[i];
             Ivtx++;
          }
          else if (sscanf(line,"vt %lf %lf",&V[0],&V[1]) == 2 ||
                   sscanf(line,"vt %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
-            G->Vt[Ivt][0] = V[0];
-            G->Vt[Ivt][1] = (1.0-V[1]); /* Flip about horizontal axis */
+            M->Vt[Ivt][0] = V[0];
+            M->Vt[Ivt][1] = (1.0-V[1]); /* Flip about horizontal axis */
             Ivt++;
          }
          else if (sscanf(line,"vn  %lf %lf %lf",&V[0],&V[1],&V[2]) == 3) {
@@ -1071,11 +1071,11 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
                }
                /* printf("Zero-length normal in LoadWingsObjFile %s\n",ObjFilename); */
             }
-            for(i=0;i<3;i++) G->Vn[Ivn][i] = V[i];
+            for(i=0;i<3;i++) M->Vn[Ivn][i] = V[i];
             Ivn++;
          }
          else if(line[0] == 'f') {
-            P = &G->Poly[Ipoly];
+            P = &M->Poly[Ipoly];
             P->Nv = 0;
             P->Matl = MatlIdx;
             P->ContactPoly = 0;
@@ -1132,12 +1132,12 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
                   P->HasNorm = 0;
                }
             }
-            /* If poly is degenerate, remove it from Geom */
-            if (PolyIsDegenerate(P,G->V)) {
+            /* If poly is degenerate, remove it from Mesh */
+            if (PolyIsDegenerate(P,M->V)) {
                free(P->V);
                free(P->Vt);
                free(P->Vn);
-               G->Npoly--;
+               M->Npoly--;
             }
             else {
                Ipoly++;
@@ -1167,14 +1167,14 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
                }
             }
             FirstUse = 1;
-            for(Im=0;Im<G->Nmatl;Im++) {
-               if(MatlIdx == G->Matl[Im]) FirstUse = 0;
+            for(Im=0;Im<M->Nmatl;Im++) {
+               if(MatlIdx == M->Matl[Im]) FirstUse = 0;
             }
             if (FirstUse) {
-               G->Nmatl++;
-               if (G->Nmatl > 2)
-                  G->Matl = (long *) realloc(G->Matl,G->Nmatl*sizeof(long));
-               G->Matl[G->Nmatl-1] = MatlIdx;
+               M->Nmatl++;
+               if (M->Nmatl > 2)
+                  M->Matl = (long *) realloc(M->Matl,M->Nmatl*sizeof(long));
+               M->Matl[M->Nmatl-1] = MatlIdx;
             }
          }
          sprintf(line,"Flush");
@@ -1183,59 +1183,59 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
 
       /* Find Bounding Box */
       for(j=0;j<3;j++) {
-         G->BBox.max[j] = G->V[0][j];
-         G->BBox.min[j] = G->V[0][j];
+         M->BBox.max[j] = M->V[0][j];
+         M->BBox.min[j] = M->V[0][j];
       }
-      for(i=1;i<G->Nv;i++) {
+      for(i=1;i<M->Nv;i++) {
          for(j=0;j<3;j++) {
-            if (G->V[i][j] < G->BBox.min[j]) G->BBox.min[j] = G->V[i][j];
-            if (G->V[i][j] > G->BBox.max[j]) G->BBox.max[j] = G->V[i][j];
+            if (M->V[i][j] < M->BBox.min[j]) M->BBox.min[j] = M->V[i][j];
+            if (M->V[i][j] > M->BBox.max[j]) M->BBox.max[j] = M->V[i][j];
          }
       }
       /* Expand BBox slightly to make sure all Vtx's are inside it */
       for(j=0;j<3;j++) {
-         G->BBox.max[j] += 0.01;
-         G->BBox.min[j] -= 0.01;
+         M->BBox.max[j] += 0.01;
+         M->BBox.min[j] -= 0.01;
       }
       for(j=0;j<3;j++) {
-         G->BBox.center[j] = 0.5*(G->BBox.min[j]+G->BBox.max[j]);
+         M->BBox.center[j] = 0.5*(M->BBox.min[j]+M->BBox.max[j]);
       }
       for(j=0;j<3;j++) {
-         r[j] = G->V[0][j]-G->BBox.center[j];
+         r[j] = M->V[0][j]-M->BBox.center[j];
       }
-      G->BBox.radius = MAGV(r);
-      for(i=1;i<G->Nv;i++) {
+      M->BBox.radius = MAGV(r);
+      for(i=1;i<M->Nv;i++) {
          for(j=0;j<3;j++) {
-            r[j] = G->V[i][j]-G->BBox.center[j];
+            r[j] = M->V[i][j]-M->BBox.center[j];
          }
-         if (MAGV(r) > G->BBox.radius) G->BBox.radius = MAGV(r);
+         if (MAGV(r) > M->BBox.radius) M->BBox.radius = MAGV(r);
       }
 
-      for(i=0;i<G->Nvn;i++) UNITV(G->Vn[i]);
+      for(i=0;i<M->Nvn;i++) UNITV(M->Vn[i]);
 
       if (EdgesEnabled) {
          /* Build Edge Tables */
-         G->Nedge = 0;
-         for(Ip=0;Ip<G->Npoly;Ip++) {
-            P = &G->Poly[Ip];
+         M->Nedge = 0;
+         for(Ip=0;Ip<M->Npoly;Ip++) {
+            P = &M->Poly[Ip];
             P->E = (long *) calloc(P->Nv,sizeof(long));
             for(Iv=0;Iv<P->Nv;Iv++) {
                V1 = P->V[Iv];
                V2 = P->V[(Iv+1)%P->Nv];
                BeenHereOnce = 0;
-               for(Ie=0;Ie<G->Nedge;Ie++) {
-                  if (G->Edge[Ie].Vtx1 == V2) {
-                     if (G->Edge[Ie].Vtx2 == V1) {
+               for(Ie=0;Ie<M->Nedge;Ie++) {
+                  if (M->Edge[Ie].Vtx1 == V2) {
+                     if (M->Edge[Ie].Vtx2 == V1) {
                         BeenHereOnce = 1;
-                        G->Edge[Ie].Poly2 = Ip;
+                        M->Edge[Ie].Poly2 = Ip;
                         P->E[Iv] = Ie;
                         break;
                      }
                   }
                }
                if (!BeenHereOnce) {
-                  G->Nedge++;
-                  if (G->Nedge == 1) {
+                  M->Nedge++;
+                  if (M->Nedge == 1) {
                      Ptr = calloc(1,sizeof(struct EdgeType));
                      if (Ptr == NULL) {
                         printf("Realloc failed in LoadWingsObjFile\n");
@@ -1243,50 +1243,50 @@ struct GeomType *LoadWingsObjFile(const char ModelPath[80],const char ObjFilenam
                      }
                   }
                   else {
-                     Ptr = realloc(G->Edge,G->Nedge*sizeof(struct EdgeType));
+                     Ptr = realloc(M->Edge,M->Nedge*sizeof(struct EdgeType));
                      if (Ptr == NULL) {
                         printf("Realloc failed in LoadWingsObjFile\n");
                         exit(1);
                      }
                   }
-                  G->Edge = (struct EdgeType *) Ptr;
-                  G->Edge[G->Nedge-1].Vtx1 = V1;
-                  G->Edge[G->Nedge-1].Vtx2 = V2;
-                  G->Edge[G->Nedge-1].Poly1 = Ip;
-                  G->Edge[G->Nedge-1].Poly2 = -1;
-                  for(i=0;i<3;i++) V[i] = G->V[V1][i] - G->V[V2][i];
-                  G->Edge[G->Nedge-1].Length = MAGV(V);
-                  P->E[Iv] = G->Nedge-1;
+                  M->Edge = (struct EdgeType *) Ptr;
+                  M->Edge[M->Nedge-1].Vtx1 = V1;
+                  M->Edge[M->Nedge-1].Vtx2 = V2;
+                  M->Edge[M->Nedge-1].Poly1 = Ip;
+                  M->Edge[M->Nedge-1].Poly2 = -1;
+                  for(i=0;i<3;i++) V[i] = M->V[V1][i] - M->V[V2][i];
+                  M->Edge[M->Nedge-1].Length = MAGV(V);
+                  P->E[Iv] = M->Nedge-1;
                }
             }
          }
       }
 
       /* Find Normals, Areas, Centroids for use in surface force models */
-      SurfaceForceProps(G);
+      SurfaceForceProps(M);
       
       /* For polyhedron gravity */
-      if (EdgesEnabled) EdgeAndPolyDyads(G);
+      if (EdgesEnabled) EdgeAndPolyDyads(M);
 
       /* Find radius of bounding sphere for each poly */
-      for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
-         P = &G->Poly[Ipoly];
+      for(Ipoly=0;Ipoly<M->Npoly;Ipoly++) {
+         P = &M->Poly[Ipoly];
          P->radius = 0.0;
          for(Iv=0;Iv<P->Nv;Iv++) {
             Ivtx = P->V[Iv];
-            for(i=0;i<3;i++) r[i] = G->V[Ivtx][i] - P->Centroid[i];
+            for(i=0;i<3;i++) r[i] = M->V[Ivtx][i] - P->Centroid[i];
             magr = MAGV(r);
             if (magr > P->radius) P->radius = magr;
          }
       }
 
-      *Ngeom = Ng;
-      *GeomTag = Ng-1;
-      return(Geom);
+      *Nmesh = Ng;
+      *MeshTag = Ng-1;
+      return(Mesh);
 #undef D2R
 }
 /*********************************************************************/
-void WriteGeomToObjFile(struct MatlType *Matl,struct GeomType *Geom,const char Path[80],
+void WriteMeshToObjFile(struct MatlType *Matl,struct MeshType *Mesh,const char Path[80],
    const char FileName[40])
 {
       char MtlFileName[80],ObjFileName[80];
@@ -1300,7 +1300,7 @@ void WriteGeomToObjFile(struct MatlType *Matl,struct GeomType *Geom,const char P
       strcat(MtlFileName,".mtl");
       MtlFile = FileOpen(Path,MtlFileName,"wt");
 
-      for(Im=0;Im<Geom->Nmatl;Im++) {
+      for(Im=0;Im<Mesh->Nmatl;Im++) {
          M = &Matl[Im];
          fprintf(MtlFile,"newmtl %s\n",M->Label);
          fprintf(MtlFile,"d %f\n",M->Kd[3]);
@@ -1349,32 +1349,32 @@ void WriteGeomToObjFile(struct MatlType *Matl,struct GeomType *Geom,const char P
       ObjFile = FileOpen(Path,ObjFileName,"wt");
 
       fprintf(ObjFile,"# Nv = %ld  Nvt = %ld  Nvn = %ld  Npoly = %ld\n\n",
-               Geom->Nv,Geom->Nvt,Geom->Nvn,Geom->Npoly);
+               Mesh->Nv,Mesh->Nvt,Mesh->Nvn,Mesh->Npoly);
 
       fprintf(ObjFile,"mtllib %s\n\n",MtlFileName);
 
       /* Vertices */
-      for(Iv=0;Iv<Geom->Nv;Iv++) {
-         V = Geom->V[Iv];
+      for(Iv=0;Iv<Mesh->Nv;Iv++) {
+         V = Mesh->V[Iv];
          fprintf(ObjFile,"v %lf %lf %lf\n",V[0],V[1],V[2]);
       }
       /* Texture Vertices */
-      for(Iv=0;Iv<Geom->Nvt;Iv++) {
-         V = Geom->Vt[Iv];
+      for(Iv=0;Iv<Mesh->Nvt;Iv++) {
+         V = Mesh->Vt[Iv];
          fprintf(ObjFile,"vt %lf %lf %lf\n",V[0],V[1],V[2]);
       }
       /* Normals */
-      for(Iv=0;Iv<Geom->Nvn;Iv++) {
-         V = Geom->Vn[Iv];
+      for(Iv=0;Iv<Mesh->Nvn;Iv++) {
+         V = Mesh->Vn[Iv];
          fprintf(ObjFile,"vn %lf %lf %lf\n",V[0],V[1],V[2]);
       }
       fprintf(ObjFile,"\n");
 
-      for(Im=0;Im<Geom->Nmatl;Im++) {
+      for(Im=0;Im<Mesh->Nmatl;Im++) {
          M = &Matl[Im];
          fprintf(ObjFile,"usemtl %s\n",M->Label);
-         for(Ip=0;Ip<Geom->Npoly;Ip++) {
-            P = &Geom->Poly[Ip];
+         for(Ip=0;Ip<Mesh->Npoly;Ip++) {
+            P = &Mesh->Poly[Ip];
             if (P->Matl == Im) {
                fprintf(ObjFile,"f ");
                for(Iv=0;Iv<P->Nv;Iv++) {

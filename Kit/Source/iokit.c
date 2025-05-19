@@ -254,7 +254,7 @@ SOCKET InitSocketClient(const char *hostname, int Port,int AllowBlocking)
       }
       memset((char *) &Server,0,sizeof(Server));
       Server.sin_family = AF_INET;
-      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr,
+      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr_list[0],
          Host->h_length);
       Server.sin_port = htons(Port);
       printf("Client connecting to Server on Port %i\n",Port);
@@ -291,7 +291,7 @@ SOCKET InitSocketClient(const char *hostname, int Port,int AllowBlocking)
       }
       memset((char *) &Server,0,sizeof(Server));
       Server.sin_family = AF_INET;
-      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr,
+      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr_list[0],
          Host->h_length);
       Server.sin_port = htons(Port);
       printf("Client connecting to Server on Port %i\n",Port);

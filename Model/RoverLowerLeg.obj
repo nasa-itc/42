@@ -1,6 +1,6 @@
 # Nv = 144  Nvt = 0  Nvn = 852  Npoly = 284
 # Exported from Wings 3D 1.5.2
-mtllib RoverLowerLeg.mtl
+mtllib 42.mtl
 o Cylinder2
 #144 vertices, 284 faces
 v 2.5000000e-2 1.6175447e-17 0.0000000e+0
@@ -999,8 +999,7 @@ vn -0.65465367 0.37796447 -0.65465367
 vn -1.6024689e-15 0.0000000e+0 -1.00000000
 vn -3.1471865e-15 0.75592895 -0.65465367
 vn 0.65465367 0.37796447 -0.65465367
-g Cylinder2_SILVER_KAPTON
-usemtl SILVER_KAPTON
+usemtl GOLD
 s 1
 f 2//6 126//746 1//3
 f 4//16 124//733 3//12

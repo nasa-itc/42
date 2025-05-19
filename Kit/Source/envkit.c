@@ -909,7 +909,7 @@ void ECEFToWGS84(double p[3], double *glat, double *glong, double *alt)
 /**********************************************************************/
 /* Ref Werner and Scheeres, "Exterior Gravitation of a Polyhedron ..." */
 /* Returns 1 if PosN is outside polyhedron, 0 if inside */
-long PolyhedronGravAcc(struct GeomType *G, double Density, 
+long PolyhedronGravAcc(struct MeshType *M, double Density, 
    double PosN[3], double CWN[3][3], double GravAccN[3])
 {
       struct EdgeType *E;
@@ -928,10 +928,10 @@ long PolyhedronGravAcc(struct GeomType *G, double Density,
       
       MxV(CWN,PosN,PosW);
       
-      for(Ie=0;Ie<G->Nedge;Ie++) {
-         E = &G->Edge[Ie];
-         V1 = G->V[E->Vtx1];
-         V2 = G->V[E->Vtx2];
+      for(Ie=0;Ie<M->Nedge;Ie++) {
+         E = &M->Edge[Ie];
+         V1 = M->V[E->Vtx1];
+         V2 = M->V[E->Vtx2];
          for(i=0;i<3;i++) {
             re1[i] = V1[i] - PosW[i];
             re2[i] = V2[i] - PosW[i];
@@ -945,11 +945,11 @@ long PolyhedronGravAcc(struct GeomType *G, double Density,
          }
       }
       
-      for(Ip=0;Ip<G->Npoly;Ip++) {
-         P = &G->Poly[Ip];
-         V1 = G->V[P->V[0]];
-         V2 = G->V[P->V[1]];
-         V3 = G->V[P->V[2]];
+      for(Ip=0;Ip<M->Npoly;Ip++) {
+         P = &M->Poly[Ip];
+         V1 = M->V[P->V[0]];
+         V2 = M->V[P->V[1]];
+         V3 = M->V[P->V[2]];
          for(i=0;i<3;i++) {
             rf1[i] = V1[i] - PosW[i];
             rf2[i] = V2[i] - PosW[i];
@@ -984,7 +984,7 @@ long PolyhedronGravAcc(struct GeomType *G, double Density,
 /**********************************************************************/
 /* Ref Werner and Scheeres, "Exterior Gravitation of a Polyhedron ..." */
 /* Returns 1 if PosN is outside polyhedron, 0 if inside */
-long PolyhedronGravGrad(struct GeomType *G, double Density, double PosN[3],
+long PolyhedronGravGrad(struct MeshType *M, double Density, double PosN[3],
    double CWN[3][3], double GravGradN[3][3])
 {
       struct EdgeType *E;
@@ -1003,10 +1003,10 @@ long PolyhedronGravGrad(struct GeomType *G, double Density, double PosN[3],
       
       MxV(CWN,PosN,PosW);
       
-      for(Ie=0;Ie<G->Nedge;Ie++) {
-         E = &G->Edge[Ie];
-         V1 = G->V[E->Vtx1];
-         V2 = G->V[E->Vtx2];
+      for(Ie=0;Ie<M->Nedge;Ie++) {
+         E = &M->Edge[Ie];
+         V1 = M->V[E->Vtx1];
+         V2 = M->V[E->Vtx2];
          for(i=0;i<3;i++) {
             re1[i] = V1[i] - PosW[i];
             re2[i] = V2[i] - PosW[i];
@@ -1019,11 +1019,11 @@ long PolyhedronGravGrad(struct GeomType *G, double Density, double PosN[3],
          }
       }
       
-      for(Ip=0;Ip<G->Npoly;Ip++) {
-         P = &G->Poly[Ip];
-         V1 = G->V[P->V[0]];
-         V2 = G->V[P->V[1]];
-         V3 = G->V[P->V[2]];
+      for(Ip=0;Ip<M->Npoly;Ip++) {
+         P = &M->Poly[Ip];
+         V1 = M->V[P->V[0]];
+         V2 = M->V[P->V[1]];
+         V3 = M->V[P->V[2]];
          for(i=0;i<3;i++) {
             rf1[i] = V1[i] - PosW[i];
             rf2[i] = V2[i] - PosW[i];

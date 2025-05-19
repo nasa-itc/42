@@ -181,7 +181,7 @@ void DrawSunAsBackdrop(void)
       glPopMatrix();
 }
 /**********************************************************************/
-void GeomToDisplayLists(struct GeomType *G)
+void MeshToDisplayLists(struct MeshType *G)
 {
       long Im,TexActive,Iv;
       long Ip;
@@ -1153,7 +1153,7 @@ void DrawFarScene(void)
          else if (W->Visibility == WORLD_SHOWS_DISK) {
             for(j=0;j<3;j++) svh[j] = -W->PosH[j];
             UNITV(svh);
-            if (W->GeomTag == 0) { /* World is sphere */
+            if (W->MeshTag == 0) { /* World is sphere */
                MxV(World[POV.Host.World].CNH,rh[Iw],PosN);
                MxV(World[POV.Host.World].CNH,svh,svn);
                DrawWorldAsBackdrop(W,PosN,svn);
@@ -1172,7 +1172,7 @@ void DrawFarScene(void)
                glTranslated(-rh[Iw][0],-rh[Iw][1],-rh[Iw][2]);
                RotateR2L(W->CNH);
                RotateR2L(W->CWN);
-               glCallList(Geom[W->GeomTag].OpaqueListTag);
+               glCallList(Mesh[W->MeshTag].OpaqueListTag);
                glPopMatrix();
                glUseProgram(0);
             }
@@ -1438,7 +1438,7 @@ void DrawNearAuxObjects(void)
       struct SCType *S;
       struct BodyType *B;
       struct NodeType *N;
-      struct GeomType *G;
+      struct MeshType *M;
       struct FovType *F;
       float SvbColor[4] = {1.0,1.0,0.0,1.0};
       float BvbColor[4] = {1.0,0.0,0.5,1.0};
@@ -1492,19 +1492,19 @@ void DrawNearAuxObjects(void)
                if (CamShow[B_AXES]) {
                   for(Ib=0;Ib<S->Nb;Ib++) {
                      B = &S->B[Ib];
-                     G = &Geom[B->GeomTag];
+                     M = &Mesh[B->MeshTag];
                      glPushMatrix();
                      glTranslated(B->pn[0],B->pn[1],B->pn[2]);
                      RotateR2L(B->CN);
                      for(i=0;i<3;i++) {
-                        r[i] = G->BBox.max[i]-B->cm[i];
+                        r[i] = M->BBox.max[i]-B->cm[i];
                         len[i] = 1.5*r[i];
                         if (len[i] < 0.5) len[i] = 0.5;
                         if (len[i] > r[i]+1.0) len[i] = r[i]+1.0;
                      }
                      DrawAxisLabels(GLYPH_B,BBrightColor,
                         0.0,len[0],0.0,len[1],0.0,len[2]);
-                     DrawBodyLabel(Ib,BBrightColor,G->BBox.max);
+                     DrawBodyLabel(Ib,BBrightColor,M->BBox.max);
 
                      /* Draw dots at joints */
                      glDisable(GL_LIGHTING);
@@ -1668,7 +1668,7 @@ void DrawContactSpheres(void)
 {
       struct SCType *S;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *M;
       struct PolyType *P;
       long Isc,Ib,Ip;
       static long First = 1;
@@ -1692,11 +1692,11 @@ void DrawContactSpheres(void)
          if (S->RefOrb == POV.Host.RefOrb) {
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
-               G = &Geom[B->GeomTag];
+               M = &Mesh[B->MeshTag];
                glPushMatrix();
                glMultMatrixf(B->ModelMatrix);
-               for(Ip=0;Ip<G->Npoly;Ip++) {
-                  P = &G->Poly[Ip];
+               for(Ip=0;Ip<M->Npoly;Ip++) {
+                  P = &M->Poly[Ip];
                   glPushMatrix();
                   glTranslated(P->Centroid[0],P->Centroid[1],P->Centroid[2]);
                   glScaled(P->radius,P->radius,P->radius);
@@ -1723,7 +1723,7 @@ void DepthPass(void)
       struct ShadowFBOType *SM;
       struct SCType *S;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *M;
       struct BoundingBoxType *BB, LB;
       long Isc,Ib,i;
       double PosR[3];
@@ -1745,8 +1745,8 @@ void DepthPass(void)
          if (ScIsVisible(POV.Host.RefOrb,Isc,PosR) ) {
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
-               G = &Geom[B->GeomTag];
-               BB = &G->BBox;
+               M = &Mesh[B->MeshTag];
+               BB = &M->BBox;
                for(i=0;i<3;i++) rb[i] = BB->center[i] - B->cm[i];
                MxV(B->CN,rb,rn);
                for(i=0;i<3;i++) rn[i] += B->pn[i]+ S->PosR[i];
@@ -1805,10 +1805,10 @@ void DepthPass(void)
                if (ScIsVisible(POV.Host.RefOrb,Isc,PosR) ) {
                   for(Ib=0;Ib<S->Nb;Ib++) {
                      B = &S->B[Ib];
-                     G = &Geom[B->GeomTag];
+                     M = &Mesh[B->MeshTag];
                      glPushMatrix();
                         glMultMatrixf(B->ModelMatrix);
-                        glCallList(G->DepthListTag);
+                        glCallList(M->DepthListTag);
                      glPopMatrix();
                   }
                }
@@ -1830,13 +1830,54 @@ void DepthPass(void)
       glViewport(0,0,CamWidth,CamHeight);
 }
 /**********************************************************************/
+void DrawCmdPath(void)
+{
+      struct MatlType *M;
+      double PosCmd[3];
+      double wx = TwoPi/1000.0;
+      double wy = TwoPi/700.0;
+      double dt,t;
+      
+      glLineWidth(4.0);
+      glPointSize(8.0);
+      M = &Matl[8];
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,M->Ka);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,M->Kd);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,M->Ks);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,M->Ke);
+      glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,M->Ns);
+
+      glBegin(GL_LINES);
+         for(dt=-500.0;dt<500.0;dt+=1.0) {
+            t = SimTime + dt;
+            PosCmd[0] = 20.0*sin(wx*t);
+            PosCmd[1] = 15.0*sin(wy*t);      
+            PosCmd[2] = 0.5;
+            glVertex3dv(PosCmd);
+            PosCmd[0] = 20.0*sin(wx*(t+1.0));
+            PosCmd[1] = 15.0*sin(wy*(t+1.0));      
+            PosCmd[2] = 0.5;
+            glVertex3dv(PosCmd);
+         }
+      glEnd();
+      glBegin(GL_POINTS);
+         PosCmd[0] = 20.0*sin(wx*SimTime);
+         PosCmd[1] = 15.0*sin(wy*SimTime);      
+         PosCmd[2] = 0.5;
+         glVertex3dv(PosCmd);
+      glEnd();
+
+      glLineWidth(1.0);
+      glPointSize(1.0);
+}
+/**********************************************************************/
 void OpaquePass(void)
 {
       long Isc,Ib;
       struct SCType *S;
       struct BodyType *B;
       struct RegionType *R;
-      struct GeomType *G;
+      struct MeshType *M;
       struct ShadowFBOType *SM;
       long Ir;
       double PosR[3];
@@ -1860,11 +1901,12 @@ void OpaquePass(void)
          if (R->Exists && R->World == POV.Host.World) {
             glPushMatrix();
             glMultMatrixf(R->ModelMatrix);
+            DrawCmdPath();
             if (ShadowsEnabled) {
                MxM4f(ShadowFromNMatrix,R->ModelMatrix,ShadowMatrix);
                glUniformMatrix4fv(ShadowMatrixLoc,1,0,ShadowMatrix);
             }
-            glCallList(Geom[R->GeomTag].OpaqueListTag);
+            glCallList(Mesh[R->MeshTag].OpaqueListTag);
             glPopMatrix();
          }
       }
@@ -1874,14 +1916,14 @@ void OpaquePass(void)
          if (ScIsVisible(POV.Host.RefOrb,Isc,PosR)) {
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
-               G = &Geom[B->GeomTag];
+               M = &Mesh[B->MeshTag];
                glPushMatrix();
                glMultMatrixf(B->ModelMatrix);
                if (ShadowsEnabled) {
                   MxM4f(ShadowFromNMatrix,B->ModelMatrix,ShadowMatrix);
                   glUniformMatrix4fv(ShadowMatrixLoc,1,0,ShadowMatrix);
                }
-               glCallList(G->OpaqueListTag);
+               glCallList(M->OpaqueListTag);
                glPopMatrix();
             }
          }
@@ -1893,7 +1935,7 @@ void SeeThruPass(void)
       long Isc,Ib,Ir;
       struct SCType *S;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *M;
       struct RegionType *R;
       struct ShadowFBOType *SM;
       double PosR[3];
@@ -1921,7 +1963,7 @@ void SeeThruPass(void)
                MxM4f(ShadowFromNMatrix,R->ModelMatrix,ShadowMatrix);
                glUniformMatrix4fv(ShadowMatrixLoc,1,0,ShadowMatrix);
             }
-            glCallList(Geom[R->GeomTag].SeeThruListTag);
+            glCallList(Mesh[R->MeshTag].SeeThruListTag);
             glPopMatrix();
          }
       }
@@ -1932,10 +1974,10 @@ void SeeThruPass(void)
          if (ScIsVisible(POV.Host.RefOrb,Isc,PosR)) {
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
-               G = &Geom[B->GeomTag];
+               M = &Mesh[B->MeshTag];
                glPushMatrix();
                glMultMatrixf(B->ModelMatrix);
-               glCallList(G->SeeThruListTag);
+               glCallList(M->SeeThruListTag);
                glPopMatrix();
             }
          }
@@ -4649,20 +4691,20 @@ void LoadCamLists(void)
       long Isc,Ib,Iw,Ir;
       double MwAlphaMask[4] = {0.0,0.5,0.5,0.0};
 
-/* .. Load SC Geom Display Lists */
+/* .. Load SC Mesh Display Lists */
       for(Isc=0;Isc<Nsc;Isc++) {
          for(Ib=0;Ib<SC[Isc].Nb;Ib++) {
-            GeomToDisplayLists(&Geom[SC[Isc].B[Ib].GeomTag]);
+            MeshToDisplayLists(&Mesh[SC[Isc].B[Ib].MeshTag]);
          }
       }
-/* .. Load World Geom Display Lists */
+/* .. Load World Mesh Display Lists */
       for(Iw=0;Iw<NWORLD;Iw++) {
-         if (World[Iw].GeomTag != 0)
-            GeomToDisplayLists(&Geom[World[Iw].GeomTag]);
+         if (World[Iw].MeshTag != 0)
+            MeshToDisplayLists(&Mesh[World[Iw].MeshTag]);
       }
-/* .. Load Region Geom Display Lists */
+/* .. Load Region Mesh Display Lists */
       for(Ir=0;Ir<Nrgn;Ir++) {
-         GeomToDisplayLists(&Geom[Rgn[Ir].GeomTag]);
+         MeshToDisplayLists(&Mesh[Rgn[Ir].MeshTag]);
       }
 
 /* .. Load Stars and Worlds */

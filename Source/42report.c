@@ -27,7 +27,7 @@ void WriteScVarsToCsv(void);
 double FindTotalProjectedArea(struct SCType *S,double VecN[3])
 {
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *M;
       struct PolyType *P;
       double ProjArea = 0.0;
       double VecB[3],VoN;
@@ -39,9 +39,9 @@ double FindTotalProjectedArea(struct SCType *S,double VecN[3])
          /* Transform Direction Vector from N to B */
          MxV(B->CN,VecN,VecB);
 
-         G = &Geom[B->GeomTag];
-         for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
-            P = &G->Poly[Ipoly];
+         M = &Mesh[B->MeshTag];
+         for(Ipoly=0;Ipoly<M->Npoly;Ipoly++) {
+            P = &M->Poly[Ipoly];
             VoN = VoV(VecB,P->Norm);
             if (VoN > 0.0) {
                ProjArea += VoN*P->Area;
@@ -54,7 +54,7 @@ double FindTotalProjectedArea(struct SCType *S,double VecN[3])
 double FindTotalUnshadedProjectedArea(struct SCType *S,double VecN[3])
 {
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *M;
       struct PolyType *P;
       double ProjArea = 0.0;
       double VecB[3],VoN;
@@ -68,9 +68,9 @@ double FindTotalUnshadedProjectedArea(struct SCType *S,double VecN[3])
          /* Transform Direction Vector from N to B */
          MxV(B->CN,VecN,VecB);
 
-         G = &Geom[B->GeomTag];
-         for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
-            P = &G->Poly[Ipoly];
+         M = &Mesh[B->MeshTag];
+         for(Ipoly=0;Ipoly<M->Npoly;Ipoly++) {
+            P = &M->Poly[Ipoly];
             VoN = VoV(VecB,P->Norm);
             if (VoN > 0.0) {
                ProjArea += VoN*P->UnshadedArea;
