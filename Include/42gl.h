@@ -220,11 +220,10 @@ EXTERN GLfloat LightPosN[4];
 EXTERN GLfloat ShadowFromNMatrix[16]; /* 4x4 Matrix transforms from N frame to Shadow Texture space */
 EXTERN GLfloat CNE[9]; /* DCM between N and Eye frame */
 
-
 EXTERN char Banner[120];
 EXTERN GLfloat BannerColor[4];
 
-void GeomToDisplayLists(struct GeomType *G);
+void MeshToDisplayLists(struct MeshType *M);
 void UpdatePOV(void);
 void CamRenderExec(void);
 void DrawMap(void);

@@ -12,8 +12,8 @@
 /*    All Other Rights Reserved.                                      */
 
 
-#ifndef __GEOMKIT_H__
-#define __GEOMKIT_H__
+#ifndef __MESHKIT_H__
+#define __MESHKIT_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,7 +93,7 @@ struct OctreeCellType {
    long NextOnHit;
 };
 
-/* Only add an Octree to Geom struct if it'll be used */
+/* Only add an Octree to Mesh struct if it'll be used */
 struct OctreeType {
    long Noct;  /* Number of occupied cells in Octree */
    long *OctIdx; /* List of indices pointing into occupied cells */
@@ -114,7 +114,7 @@ struct KDNodeType {
    struct KDNodeType *HighChild;
 };
 
-struct GeomType {
+struct MeshType {
    char ObjFileName[40];
    long Nmatl;
    long Nv;
@@ -170,20 +170,20 @@ struct MatlType {
 struct MatlType *AddMtlLib(const char *PathName, const char *MtlLibName,
    struct MatlType *OldMatl, long *Nmatl);
 void ScaleSpecDiffFrac(struct MatlType *Matl, long Nmatl);
-void SurfaceForceProps(struct GeomType *G);
-void LoadKDTree(struct GeomType *G);
-long KDProjectRayOntoGeom(double Source[3], double DirVec[3],
-   struct GeomType *G, long *HitPoly, double HitPoint[3]);
-void LoadOctree(struct GeomType *G);
-long OCProjectRayOntoGeom(double Point[3],double DirVec[3],
-   struct GeomType *G,double ProjPoint[3],long *ClosestPoly);
-struct GeomType *LoadWingsObjFile(const char *ModelPath, const char *ObjFilename,
+void SurfaceForceProps(struct MeshType *M);
+void LoadKDTree(struct MeshType *M);
+long KDProjectRayOntoMesh(double Source[3], double DirVec[3],
+   struct MeshType *M, long *HitPoly, double HitPoint[3]);
+void LoadOctree(struct MeshType *M);
+long OCProjectRayOntoMesh(double Point[3],double DirVec[3],
+   struct MeshType *M,double ProjPoint[3],long *ClosestPoly);
+struct MeshType *LoadWingsObjFile(const char *ModelPath, const char *ObjFilename,
                        struct MatlType **MatlPtr, long *Nmatl,
-                       struct GeomType *Geom, long *Ngeom, long *GeomTag,
+                       struct MeshType *Mesh, long *Nmesh, long *MeshTag,
                        long EdgesEnabled);
-void WriteGeomToObjFile(struct MatlType *Matl,struct GeomType *Geom,const char *Path,
+void WriteMeshToObjFile(struct MatlType *Matl,struct MeshType *Mesh,const char *Path,
    const char *FileName);
-double PolyhedronVolume(struct GeomType *G);
+double PolyhedronVolume(struct MeshType *M);
 
 /*
 ** #ifdef __cplusplus
@@ -191,4 +191,4 @@ double PolyhedronVolume(struct GeomType *G);
 ** #endif
 */
 
-#endif /* __GEOMKIT_H__ */
+#endif /* __MESHKIT_H__ */

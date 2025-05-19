@@ -12,7 +12,7 @@
 /*    All Other Rights Reserved.                                      */
 
 
-#include "geomkit.h"
+#include "meshkit.h"
 #include "orbkit.h"
 #include "sigkit.h"
 #include "AcTypes.h"
@@ -112,11 +112,11 @@ struct BodyType {
    double FrcN[3]; /* expressed in N */
    double alpha[3]; /* Angular acceleration of B wrt N, expressed in B */
    double accel[3]; /* Linear acceleration of B wrt N, expressed in N */
-   char GeomFileName[40];
+   char MeshFileName[40];
    char NodeFileName[40];
    char FlexFileName[40];
    float ModelMatrix[16]; /* For OpenGL */
-   long GeomTag;
+   long MeshTag;
    /* For KaneNBody Dynamics */
    long Gin;  /* Joint that B is Bout of */
    double beta[3];  /* Vector from B ref pt to B[0] ref pt, expressed in N */
@@ -877,8 +877,8 @@ struct RegionType {
    double wn[3]; /* Expressed in R frame */
    double ElastCoef,DampCoef,FricCoef;
    char Name[20];
-   char GeomFileName[40];
-   long GeomTag;
+   char MeshFileName[40];
+   long MeshTag;
    float ModelMatrix[16]; /* For OpenGL */
 };
 
@@ -926,7 +926,7 @@ struct WorldType {
    long HasRing;
    char Name[20];
    char MapFileName[40];
-   char GeomFileName[40];
+   char MeshFileName[40];
    char ColTexFileName[40];
    char BumpTexFileName[40];
    float Color[4];
@@ -938,7 +938,7 @@ struct WorldType {
    unsigned int ColCubeTag;
    unsigned int BumpCubeTag;
    unsigned int CloudGlossCubeTag;
-   long GeomTag;
+   long MeshTag;
    unsigned int RingTexTag;
    double NearExtent,FarExtent;
 

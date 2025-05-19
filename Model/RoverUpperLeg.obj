@@ -1,6 +1,6 @@
 # Nv = 126  Nvt = 0  Nvn = 744  Npoly = 248
 # Exported from Wings 3D 1.5.2
-mtllib RoverUpperLeg.mtl
+mtllib 42.mtl
 o Cylinder1
 #126 vertices, 248 faces
 v 0.0000000e+0 2.5000000e-2 8.6736174e-19
@@ -873,8 +873,7 @@ vn 6.8973781e-17 0.86602540 -0.50000000
 vn 5.7824116e-17 0.86602540 0.50000000
 vn 5.7824116e-17 0.86602540 0.50000000
 vn 6.8973781e-17 0.86602540 -0.50000000
-g Cylinder1_SILVER_KAPTON
-usemtl SILVER_KAPTON
+usemtl GOLD
 s 1
 f 1//4 5//25 2//11
 f 2//7 4//17 3//13

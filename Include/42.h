@@ -28,9 +28,9 @@
 #include "42defines.h"
 #include "dcmkit.h"
 #include "envkit.h"
-#include "geomkit.h"
 #include "iokit.h"
 #include "mathkit.h"
+#include "meshkit.h"
 #include "orbkit.h"
 #include "sigkit.h"
 #include "sphkit.h"
@@ -52,8 +52,8 @@ EXTERN long Nsc;
 
 /* Number of materials */
 EXTERN long Nmatl;
-/* Number of geometric objects */
-EXTERN long Ngeom;
+/* Number of geometric meshes */
+EXTERN long Nmesh;
 
 EXTERN char InOutPath[512];
 EXTERN char ModelPath[512];
@@ -120,9 +120,9 @@ EXTERN struct SCType *SC;
 /* Frm structure describes a Formation of S/C's */
 EXTERN struct FormationType *Frm;
 
-/* Geom structure manages geometric objects, used for display and    */
+/* Mesh structure manages geometric objects, used for display and    */
 /* for surface force computation (e.g. aerodynamic)                  */
-EXTERN struct GeomType *Geom;
+EXTERN struct MeshType *Mesh;
 
 EXTERN struct POVType POV;
 

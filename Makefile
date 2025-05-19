@@ -103,6 +103,7 @@ ifeq ($(42PLATFORM),__APPLE__)
       LIBS = 
       GUIOBJ = 
    endif
+   NOS3OBJ = $(OBJ)42nos3.o
    XWARN = 
    EXENAME = 42
    CC = gcc
@@ -137,6 +138,7 @@ ifeq ($(42PLATFORM),__linux__)
       LIBS = -ldl -lm -lpthread
       LFLAGS =
    endif
+   NOS3OBJ = $(OBJ)42nos3.o 
    XWARN = -Wno-unused-variable -Wno-unused-but-set-variable -Wno-stringop-overread
    EXENAME = 42
    CC = gcc
@@ -153,6 +155,7 @@ ifeq ($(42PLATFORM),__MSYS__)
    ifneq ($(strip $(GUIFLAG)),)
       # TODO: Option to use GLFW instead of GLUT?
       GLEW = $(EXTERNDIR)GLEW/
+      # GLEW = /mingw64/
       GLUT = $(EXTERNDIR)freeglut/
       LIBS =  -lopengl32 -lglu32 -lfreeglut -lws2_32 -lglew32
       LFLAGS = -L $(GLUT)lib/ -L $(GLEW)lib/
@@ -166,6 +169,7 @@ ifeq ($(42PLATFORM),__MSYS__)
       LFLAGS =
       ARCHFLAG =
    endif
+   NOS3OBJ = 
    XWARN = 
    EXENAME = 42.exe
    CC = gcc
@@ -214,15 +218,15 @@ endif
 42OBJ = $(OBJ)42main.o $(OBJ)42exec.o $(OBJ)42actuators.o $(OBJ)42cmd.o \
 $(OBJ)42dynamics.o $(OBJ)42environs.o $(OBJ)42ephem.o $(OBJ)42fsw.o \
 $(OBJ)42init.o $(OBJ)42ipc.o $(OBJ)42jitter.o $(OBJ)42joints.o \
-$(OBJ)42optics.o $(OBJ)42perturb.o $(OBJ)42report.o $(OBJ)42sensors.o \
-$(OBJ)42nos3.o 
+$(OBJ)42optics.o $(OBJ)42perturb.o $(OBJ)42report.o $(OBJ)42sensors.o
 
-KITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o $(OBJ)geomkit.o \
-$(OBJ)iokit.o $(OBJ)mathkit.o $(OBJ)nrlmsise00kit.o $(OBJ)msis86kit.o \
-$(OBJ)orbkit.o $(OBJ)radbeltkit.o $(OBJ)sigkit.o $(OBJ)sphkit.o $(OBJ)timekit.o
+KITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o  $(OBJ)iokit.o \
+$(OBJ)mathkit.o $(OBJ)meshkit.o $(OBJ)nrlmsise00kit.o $(OBJ)orbkit.o \
+$(OBJ)radbeltkit.o $(OBJ)sigkit.o $(OBJ)sphkit.o $(OBJ)timekit.o
 
-LIBKITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o $(OBJ)geomkit.o \
-$(OBJ)iokit.o $(OBJ)mathkit.o $(OBJ)orbkit.o $(OBJ)sigkit.o $(OBJ)sphkit.o $(OBJ)timekit.o
+LIBKITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o $(OBJ)iokit.o \
+$(OBJ)mathkit.o $(OBJ)meshkit.o $(OBJ)orbkit.o $(OBJ)sigkit.o $(OBJ)sphkit.o \
+$(OBJ)timekit.o
 
 ACKITOBJ = $(OBJ)dcmkit.o $(OBJ)mathkit.o $(OBJ)fswkit.o $(OBJ)iokit.o $(OBJ)timekit.o
 
@@ -231,13 +235,13 @@ AUTOOBJ = $(OBJ)WriteAcToCsv.o $(OBJ)WriteScToCsv.o $(OBJ)TxRxIPC.o
 #ANSIFLAGS = -Wstrict-prototypes -pedantic -ansi -Werror
 ANSIFLAGS =
 
-CFLAGS = -g -O0 -fpic -Wall -Wshadow -Wno-deprecated $(XWARN) $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) $(GMSECINC) $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG)
+CFLAGS = -std=c11 -g -O0 -fpic -Wall -Wshadow -Wno-deprecated $(XWARN) $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) $(GMSECINC) $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG)
 
 
 ##########################  Rules to link 42  #############################
 
-42 : $(42OBJ) $(KITOBJ) $(GUIOBJ) $(AUTOOBJ) $(ACOBJ) $(SCIPCOBJ) $(GMSECOBJ) $(FFTBOBJ) $(SLOSHOBJ)
-	$(CC) $(LFLAGS) $(GMSECBIN) -o $(EXENAME) $(42OBJ) $(KITOBJ) $(GUIOBJ) $(AUTOOBJ) $(ACOBJ) $(SCIPCOBJ) $(GMSECOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(LIBS)
+42 : $(42OBJ) $(KITOBJ) $(GUIOBJ) $(NOS3OBJ) $(AUTOOBJ) $(ACOBJ) $(SCIPCOBJ) $(GMSECOBJ) $(FFTBOBJ) $(SLOSHOBJ)
+	$(CC) $(LFLAGS) $(GMSECBIN) -o $(EXENAME) $(42OBJ) $(KITOBJ) $(GUIOBJ) $(NOS3OBJ) $(AUTOOBJ) $(ACOBJ) $(SCIPCOBJ) $(GMSECOBJ) $(FFTBOBJ) $(SLOSHOBJ) $(LIBS)
 
 AcApp : $(OBJ)AcApp.o $(ACKITOBJ) $(ACIPCOBJ) $(GMSECOBJ)
 	$(CC) $(LFLAGS) -o AcApp $(OBJ)AcApp.o $(ACKITOBJ) $(ACIPCOBJ) $(GMSECOBJ) $(LIBS)
@@ -320,9 +324,6 @@ $(OBJ)fswkit.o      : $(KITSRC)fswkit.c
 $(OBJ)glkit.o      : $(KITSRC)glkit.c $(KITINC)glkit.h
 	$(CC) $(CFLAGS) -c $(KITSRC)glkit.c -o $(OBJ)glkit.o
 
-$(OBJ)geomkit.o      : $(KITSRC)geomkit.c $(KITINC)geomkit.h
-	$(CC) $(CFLAGS) -c $(KITSRC)geomkit.c -o $(OBJ)geomkit.o
-
 $(OBJ)gmseckit.o      : $(KITSRC)gmseckit.c $(KITINC)gmseckit.h
 	$(CC) $(CFLAGS) -c $(KITSRC)gmseckit.c -o $(OBJ)gmseckit.o
 
@@ -331,6 +332,9 @@ $(OBJ)iokit.o      : $(KITSRC)iokit.c
 
 $(OBJ)mathkit.o     : $(KITSRC)mathkit.c
 	$(CC) $(CFLAGS) -c $(KITSRC)mathkit.c -o $(OBJ)mathkit.o
+
+$(OBJ)meshkit.o      : $(KITSRC)meshkit.c $(KITINC)meshkit.h
+	$(CC) $(CFLAGS) -c $(KITSRC)meshkit.c -o $(OBJ)meshkit.o
 
 $(OBJ)nrlmsise00kit.o   : $(KITSRC)nrlmsise00kit.c
 	$(CC) $(CFLAGS) -c $(KITSRC)nrlmsise00kit.c -o $(OBJ)nrlmsise00kit.o
@@ -410,6 +414,6 @@ else ifeq ($(42PLATFORM),_WIN64)
 	del .\Object\*.o .\$(EXENAME) .\InOut\*.42
 else
 	rm -f $(OBJ)*.o ./$(EXENAME) ./AcApp $(KITDIR)42kit.so 
-	rm -f $(INOUT)*.42 ./Standalone/*.42 ./Demo/*.42 ./Rx/*.42 ./Tx/*.42
-	rm -f $(INOUT)*.csv ./Standalone/*.csv ./Demo/*.csv ./Rx/*.csv ./Tx/*.csv
+	rm -f $(INOUT)*.42 ./Standalone/*.42 ./Demo/*.42 ./Rx/*.42 ./Tx/*.42 ./Rover/*.42
+	rm -f $(INOUT)*.csv ./Standalone/*.csv ./Demo/*.csv ./Rx/*.csv ./Tx/*.csv ./Rover/*.csv
 endif

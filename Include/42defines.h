@@ -243,6 +243,7 @@
 #define CMG_FSW 7
 #define THR_FSW 8
 #define CFS_FSW 9
+#define ROVER_FSW 10
 
 /* Command Types */
 #define CMD_DIRECTION 0
