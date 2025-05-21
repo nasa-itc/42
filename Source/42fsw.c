@@ -14,14 +14,17 @@
 
 #include "42.h"
 
-#ifdef _ENABLE_RBT_
-   void RbtFSW(struct SCType *S);
-#endif
-
 void AcFsw(struct AcType *AC);
-void WriteToSocket(SOCKET Socket, char **Prefix, long Nprefix, long EchoEnabled);
-void ReadFromSocket(SOCKET Socket, long EchoEnabled);
-
+#ifdef _AC_STANDALONE_
+long FindInBufLen(struct AcType *AC);
+long FindOutBufLen(struct AcType *AC);
+long FindTblBufLen(struct AcType *AC);
+void WriteAcInToSocket(struct AcType *AC,struct AcIpcType *I);
+void ReadAcOutFromSocket(struct AcType *AC,struct AcIpcType *I);
+void WriteAcTblToSocket(struct AcType *AC,struct AcIpcType *I);
+void WriteAcArraySizesToSocket(struct AcType *AC, struct AcIpcType *I);
+void WriteAcBufLensToSocket(struct AcIpcType *I);
+#endif
 
 /* #ifdef __cplusplus
 ** namespace _42 {
@@ -89,7 +92,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
       else if (sscanf(CmdLine,"%lf SC[%ld].G[%ld] Cmd Angles = [%lf %lf %lf] deg",
          CmdTime,&Isc,&Ig,&Ang[0],&Ang[1],&Ang[2]) == 6) {
          NewCmdProcessed = TRUE;
-         for(i=0;i<3;i++) SC[Isc].AC.G[Ig].Cmd.Ang[i] = Ang[i]*D2R;
+         for(i=0;i<3;i++) SC[Isc].AC.G[Ig].GCmd.Ang[i] = Ang[i]*D2R;
       }
 
       else if (sscanf(CmdLine,"%lf Point SC[%ld].B[%ld] %s Vector [%lf %lf %lf] at RA = %lf deg, Dec = %lf deg",
@@ -100,7 +103,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          if (!strcmp(VecString,"Primary")) CV = &Cmd->PriVec;
@@ -123,7 +126,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -148,7 +151,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -171,7 +174,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -194,7 +197,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -217,7 +220,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -238,7 +241,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -316,7 +319,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          Cmd->Frame = FRAME_N;
@@ -346,7 +349,7 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          }
          else {
             Ig = SC[Isc].B[Ib].Gin;
-            Cmd = &SC[Isc].AC.G[Ig].Cmd;
+            Cmd = &SC[Isc].AC.G[Ig].GCmd;
          }
          Cmd->Parm = PARM_VECTORS;
          if (!strcmp(VecString,"Primary")) CV = &Cmd->PriVec;
@@ -438,9 +441,9 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
       else if (sscanf(CmdLine,"%lf Set SC[%ld] RampCoastGlide wc = %lf Hz, amax = %lf, vmax = %lf",
          CmdTime,&Isc,&wc,&amax,&vmax) == 5) {
          NewCmdProcessed = TRUE;
-         SC[Isc].AC.PrototypeCtrl.wc = wc*TwoPi;
-         SC[Isc].AC.PrototypeCtrl.amax = amax;
-         SC[Isc].AC.PrototypeCtrl.vmax = vmax;
+         SC[Isc].AC.InstantCtrl.wc = wc*TwoPi;
+         SC[Isc].AC.InstantCtrl.amax = amax;
+         SC[Isc].AC.InstantCtrl.vmax = vmax;
       }
 
       else if (sscanf(CmdLine,"%lf Spin SC[%ld] about Primary Vector at %lf deg/sec",
@@ -689,7 +692,7 @@ void ThreeAxisAttitudeCommand(struct SCType *S)
          G = &S->G[Ig];
          Bi = G->Bin;
          B = &S->B[Bi];
-         Cmd = &S->AC.G[Ig].Cmd;
+         Cmd = &S->AC.G[Ig].GCmd;
          PV = &Cmd->PriVec;
          SV = &Cmd->SecVec;
 
@@ -965,8 +968,8 @@ void InitAC(struct SCType *S)
       }
       
       /* Controllers */
-      AC->PrototypeCtrl.Init = 1;
-      AC->AdHocCtrl.Init = 1;
+      AC->InstantCtrl.Init = 1;
+      AC->SandboxCtrl.Init = 1;
       AC->SpinnerCtrl.Init = 1;
       AC->MomBiasCtrl.Init = 1;
       AC->ThreeAxisCtrl.Init = 1;
@@ -976,9 +979,9 @@ void InitAC(struct SCType *S)
       AC->CfsCtrl.Init = 1;
       AC->ThrSteerCtrl.Init = 1;
       
-      AC->PrototypeCtrl.wc = 0.05*TwoPi;
-      AC->PrototypeCtrl.amax = 0.01;
-      AC->PrototypeCtrl.vmax = 0.5*D2R;
+      AC->InstantCtrl.wc = 0.05*TwoPi;
+      AC->InstantCtrl.amax = 0.01;
+      AC->InstantCtrl.vmax = 0.5*D2R;
       
       /* Initialize variables to avoid divide-by-zero before first sensor measurements */
       AC->qbn[3] = 1.0;
@@ -1092,19 +1095,18 @@ void MapCmdsToActuators(struct SCType *S)
 }
 /**********************************************************************/
 /*  This simple control law is suitable for rapid prototyping.        */
-void PrototypeFSW(struct SCType *S)
+void InstantFSW(struct SCType *S)
 {
       struct AcType *AC;
-      struct AcPrototypeCtrlType *C;
+      struct AcInstantCtrlType *C;
       struct BodyType *B;
       struct CmdType *Cmd;
       double alpha[3],Iapp[3];
       double Hvnb[3],Herr[3],werr[3];
-      double qbr[4];
       long Ig,i,j;
 
       AC = &S->AC;
-      C = &AC->PrototypeCtrl;
+      C = &AC->InstantCtrl;
       Cmd = &AC->Cmd;
             
       if (Cmd->Parm == PARM_AXIS_SPIN) {
@@ -1149,10 +1151,11 @@ void PrototypeFSW(struct SCType *S)
 
          /* Find qrn, wrn and joint angle commands */
          ThreeAxisAttitudeCommand(S);
+         for(i=0;i<4;i++) AC->qrn[i] = AC->Cmd.qrn[i];
 
          /* Form attitude error signals */
-         QxQT(AC->qbn,Cmd->qrn,qbr);
-         Q2AngleVec(qbr,C->therr);
+         QxQT(AC->qbn,Cmd->qrn,AC->qbr);
+         Q2AngleVec(AC->qbr,C->therr);
          for(i=0;i<3;i++) C->werr[i] = AC->wbn[i] - Cmd->wrn[i];
 
          /* Closed-loop attitude control */
@@ -1288,8 +1291,8 @@ void MomBiasFSW(struct SCType *S)
             bvbold[i] = AC->bvb[i];
             AC->MTB[i].Mcmd = -Kbdot*Bdot[i];
 
-            AC->G[0].Cmd.Ang[i] = 0.0;
-            AC->G[0].Cmd.AngRate[i] = 0.0;
+            AC->G[0].GCmd.Ang[i] = 0.0;
+            AC->G[0].GCmd.AngRate[i] = 0.0;
          }
 
       }
@@ -1316,18 +1319,18 @@ void MomBiasFSW(struct SCType *S)
          for(i=0;i<3;i++) AC->MTB[i].Mcmd = Mcmd[i];
 
          /* Solar Array Gimbal */
-         AC->G[0].Cmd.AngRate[0] = -PitchRateCmd;
+         AC->G[0].GCmd.AngRate[0] = -PitchRateCmd;
          if (AC->SunValid) {
             PointGimbalToTarget(AC->G[0].RotSeq, AC->G[0].CGiBi,
-               AC->G[0].CBoGo, AC->svb, Zvec, AC->G[0].Cmd.Ang);
+               AC->G[0].CBoGo, AC->svb, Zvec, AC->G[0].GCmd.Ang);
          }
          else {
-            AC->G[0].Cmd.Ang[0] += PitchRateCmd*AC->DT;
+            AC->G[0].GCmd.Ang[0] += PitchRateCmd*AC->DT;
          }
-         if (AC->G[0].Ang[0] - AC->G[0].Cmd.Ang[0] > Pi)
-            AC->G[0].Cmd.Ang[0] += TwoPi;
-         if (AC->G[0].Ang[0] - AC->G[0].Cmd.Ang[0] < -Pi)
-            AC->G[0].Cmd.Ang[0] -= TwoPi;
+         if (AC->G[0].Ang[0] - AC->G[0].GCmd.Ang[0] > Pi)
+            AC->G[0].GCmd.Ang[0] += TwoPi;
+         if (AC->G[0].Ang[0] - AC->G[0].GCmd.Ang[0] < -Pi)
+            AC->G[0].GCmd.Ang[0] -= TwoPi;
       }
 }
 /**********************************************************************/
@@ -1349,8 +1352,8 @@ void ThreeAxisFSW(struct SCType *S)
       if (C->Init) {
          C->Init = 0;
          for(j=0;j<3;j++) {
-            AC->G[0].Cmd.AngRate[j] = 0.0;
-            AC->G[0].Cmd.Ang[j] = 0.0;
+            AC->G[0].GCmd.AngRate[j] = 0.0;
+            AC->G[0].GCmd.Ang[j] = 0.0;
             AC->G[0].MaxAngRate[j] = 0.2*D2R;
             AC->G[0].MaxTrq[j] = 100.0;
             FindPDGains(S->B[1].I[1][1],0.02*TwoPi,1.0,
@@ -1388,22 +1391,22 @@ void ThreeAxisFSW(struct SCType *S)
       for(i=0;i<3;i++) AC->MTB[i].Mcmd = C->Kunl*HxB[i];
 
       /* Solar Array Gimbal */
-      AC->G[0].Cmd.AngRate[0] = wln[1];
+      AC->G[0].GCmd.AngRate[0] = wln[1];
       if (AC->SunValid) {
          PointGimbalToTarget(AC->G[0].RotSeq, AC->G[0].CGiBi,
-               AC->G[0].CBoGo, AC->svb, Zvec,AC->G[0].Cmd.Ang);
+               AC->G[0].CBoGo, AC->svb, Zvec,AC->G[0].GCmd.Ang);
       }
       else {
-         AC->G[0].Cmd.Ang[0] += wln[1]*AC->DT;
+         AC->G[0].GCmd.Ang[0] += wln[1]*AC->DT;
       }
-      if (AC->G[0].Ang[0] - AC->G[0].Cmd.Ang[0] > Pi)
-         AC->G[0].Cmd.Ang[0] += TwoPi;
-      if (AC->G[0].Ang[0] - AC->G[0].Cmd.Ang[0] < -Pi)
-         AC->G[0].Cmd.Ang[0] -= TwoPi;
+      if (AC->G[0].Ang[0] - AC->G[0].GCmd.Ang[0] > Pi)
+         AC->G[0].GCmd.Ang[0] += TwoPi;
+      if (AC->G[0].Ang[0] - AC->G[0].GCmd.Ang[0] < -Pi)
+         AC->G[0].GCmd.Ang[0] -= TwoPi;
 
-      AngErr = AC->G[0].Ang[0] - AC->G[0].Cmd.Ang[0];
-      AC->G[0].Cmd.AngRate[0] -= AC->G[0].AngGain[0]/AC->G[0].AngRateGain[0]*AngErr;
-      AC->G[0].Cmd.AngRate[0] = Limit(AC->G[0].Cmd.AngRate[0],
+      AngErr = AC->G[0].Ang[0] - AC->G[0].GCmd.Ang[0];
+      AC->G[0].GCmd.AngRate[0] -= AC->G[0].AngGain[0]/AC->G[0].AngRateGain[0]*AngErr;
+      AC->G[0].GCmd.AngRate[0] = Limit(AC->G[0].GCmd.AngRate[0],
          -AC->G[0].MaxAngRate[0],AC->G[0].MaxAngRate[0]);
 }
 /**********************************************************************/
@@ -1428,8 +1431,8 @@ void IssFSW(struct SCType *S)
          C->Init = 0;
          for(Ig=0;Ig<AC->Ng;Ig++) {
             for(j=0;j<3;j++) {
-               AC->G[Ig].Cmd.AngRate[j] = 0.0;
-               AC->G[Ig].Cmd.Ang[j] = 0.0;
+               AC->G[Ig].GCmd.AngRate[j] = 0.0;
+               AC->G[Ig].GCmd.Ang[j] = 0.0;
                AC->G[Ig].MaxAngRate[j] = 0.5*D2R;
             }
             FindAppendageInertia(Ig,S,Iapp);
@@ -1462,29 +1465,29 @@ void IssFSW(struct SCType *S)
       MxV(S->B[0].CN,AC->svn,svb);
       PointGimbalToTarget(21,Identity,Identity,svb,Zvec,GimCmd);
       GimCmd[0] += 5.0*D2R; /* Avoid lighting artifacts from on-edge polys */
-      AC->G[0].Cmd.Ang[0] = GimCmd[0];
-      AC->G[1].Cmd.Ang[0] = -GimCmd[0];
-      AC->G[0].Cmd.AngRate[0] = -S->wln[1];
-      AC->G[1].Cmd.AngRate[0] = S->wln[1];
+      AC->G[0].GCmd.Ang[0] = GimCmd[0];
+      AC->G[1].GCmd.Ang[0] = -GimCmd[0];
+      AC->G[0].GCmd.AngRate[0] = -S->wln[1];
+      AC->G[1].GCmd.AngRate[0] = S->wln[1];
 
-      AC->G[2].Cmd.Ang[0] =  GimCmd[1];
-      AC->G[3].Cmd.Ang[0] = -GimCmd[1];
-      AC->G[4].Cmd.Ang[0] =  GimCmd[1];
-      AC->G[5].Cmd.Ang[0] = -GimCmd[1];
+      AC->G[2].GCmd.Ang[0] =  GimCmd[1];
+      AC->G[3].GCmd.Ang[0] = -GimCmd[1];
+      AC->G[4].GCmd.Ang[0] =  GimCmd[1];
+      AC->G[5].GCmd.Ang[0] = -GimCmd[1];
 
-      AC->G[6].Cmd.Ang[0] = -GimCmd[1];
-      AC->G[7].Cmd.Ang[0] =  GimCmd[1];
-      AC->G[8].Cmd.Ang[0] = -GimCmd[1];
-      AC->G[9].Cmd.Ang[0] =  GimCmd[1];
+      AC->G[6].GCmd.Ang[0] = -GimCmd[1];
+      AC->G[7].GCmd.Ang[0] =  GimCmd[1];
+      AC->G[8].GCmd.Ang[0] = -GimCmd[1];
+      AC->G[9].GCmd.Ang[0] =  GimCmd[1];
 
 /* .. Point SM Solar Array */
-      AC->G[12].Cmd.Ang[0] = GimCmd[0];
-      AC->G[13].Cmd.Ang[0] = -GimCmd[0];
+      AC->G[12].GCmd.Ang[0] = GimCmd[0];
+      AC->G[13].GCmd.Ang[0] = -GimCmd[0];
 
 /* .. Point Radiators */
       PointGimbalToTarget(1,Identity,Identity,svb,Zvec,GimCmd);
-      AC->G[10].Cmd.Ang[0] =  GimCmd[0] + 90.0*D2R;
-      AC->G[11].Cmd.Ang[0] =  GimCmd[0] + 90.0*D2R;
+      AC->G[10].GCmd.Ang[0] =  GimCmd[0] + 90.0*D2R;
+      AC->G[11].GCmd.Ang[0] =  GimCmd[0] + 90.0*D2R;
 
 /* .. Point HGA */
       /* Select TDRS nearest Zenith */
@@ -1503,16 +1506,16 @@ void IssFSW(struct SCType *S)
       }
       PointGimbalToTarget(21,S->G[14].CGiBi,Identity,tvb,Zvec,GimCmd);
 
-      AC->G[14].Cmd.Ang[0] = Limit(GimCmd[0],-120.0*D2R,120.0*D2R);
-      AC->G[14].Cmd.Ang[1] = Limit(GimCmd[1],-65.0*D2R,65.0*D2R);
+      AC->G[14].GCmd.Ang[0] = Limit(GimCmd[0],-120.0*D2R,120.0*D2R);
+      AC->G[14].GCmd.Ang[1] = Limit(GimCmd[1],-65.0*D2R,65.0*D2R);
       
       for(Ig=0;Ig<AC->Ng;Ig++) {
          for(j=0;j<AC->G[Ig].RotDOF;j++) {
-            AngErr = AC->G[Ig].Ang[j] - AC->G[Ig].Cmd.Ang[j];
+            AngErr = AC->G[Ig].Ang[j] - AC->G[Ig].GCmd.Ang[j];
             if (AngErr >  Pi) AngErr -= TwoPi;
             if (AngErr < -Pi) AngErr += TwoPi;
-            AC->G[Ig].Cmd.AngRate[j] = -AC->G[Ig].AngGain[j]/AC->G[Ig].AngRateGain[j]*AngErr;
-            AC->G[Ig].Cmd.AngRate[j] = Limit(AC->G[Ig].Cmd.AngRate[j],
+            AC->G[Ig].GCmd.AngRate[j] = -AC->G[Ig].AngGain[j]/AC->G[Ig].AngRateGain[j]*AngErr;
+            AC->G[Ig].GCmd.AngRate[j] = Limit(AC->G[Ig].GCmd.AngRate[j],
                -AC->G[Ig].MaxAngRate[j],AC->G[Ig].MaxAngRate[j]);
          }
       }
@@ -1539,7 +1542,7 @@ void CmgFSW(struct SCType *S)
          C->Init = 0;
          for(i=0;i<3;i++) FindPDGains(AC->MOI[i][i],0.5,0.7,&C->Kr[i],&C->Kp[i]);
          for(i=0;i<4;i++) {
-            AC->G[i].Cmd.Ang[0] = 0.0;
+            AC->G[i].GCmd.Ang[0] = 0.0;
             AC->G[i].AngGain[0] = 0.0;
             AC->G[i].AngRateGain[0] = 100.0;
             AC->G[i].MaxAngRate[0] = 1.0*D2R;
@@ -1578,7 +1581,7 @@ void CmgFSW(struct SCType *S)
       CMGLaw4x1DOF(C->Tcmd,Axis,Gim,H,C->AngRateCmd);
 
       for(i=0;i<4;i++) {
-         AC->G[i].Cmd.AngRate[0] = C->AngRateCmd[i];
+         AC->G[i].GCmd.AngRate[0] = C->AngRateCmd[i];
       }
 }
 /**********************************************************************/
@@ -1738,18 +1741,18 @@ void CfsFSW(struct AcType *AC)
 #endif
 /**********************************************************************/
 /* Put your custom controller here                                    */
-void AdHocFSW(struct SCType *S)
+void SandboxFSW(struct SCType *S)
 {
       struct AcType *AC;
-      struct AcAdHocCtrlType *C;
+      struct AcSandboxCtrlType *C;
       double CLN[3][3],CRN[3][3],qrn[4],wln[3];
-      double CRL[3][3] = {{ 0.0, 1.0, 0.0}, 
-                          { 0.0, 0.0,-1.0},
-                          {-1.0, 0.0, 0.0}}; 
+      double CRL[3][3] = {{ 1.0, 0.0, 0.0}, 
+                          { 0.0, 1.0, 0.0},
+                          { 0.0, 0.0, 1.0}}; 
       long i;
 
       AC = &S->AC;
-      C = &AC->AdHocCtrl;
+      C = &AC->SandboxCtrl;
 
       if (C->Init) {
          C->Init = 0;
@@ -1782,8 +1785,243 @@ void AdHocFSW(struct SCType *S)
       //for(i=0;i<3;i++) AC->Whl[i].Tcmd = -C->Tcmd[i];
 }
 /**********************************************************************/
+void LegPartials(struct SCType *S, long Il, double J[3][3])
+{
+      struct JointType *Hip,*Knee;
+      double alpha,ca,sa,c1,s1,c2,s2,c3,s3,l1,l2;
+      
+      Hip = &S->G[Il];
+      Knee = &S->G[Il+6];
+      
+      alpha = (60.0*((double) Il)+30.0)*D2R;
+      ca = cos(alpha);
+      sa = sin(alpha);
+      c1 = cos(Hip->Ang[0]);
+      s1 = sin(Hip->Ang[0]);
+      c2 = cos(Hip->Ang[1]);
+      s2 = sin(Hip->Ang[1]);
+      c3 = cos(Knee->Ang[0]);
+      s3 = sin(Knee->Ang[0]);
+      l1 = 0.5;
+      l2 = 0.5;
+      
+      J[0][0] = c1*(-l1*c2*sa+l2*(c2*s3*sa+c3*s2*sa))
+                   +s1*(-l1*c2*ca-l2*(-c2*ca*s3-c3*ca*s2));
+      J[0][1] = l2*c2*(-c1*c3*ca+c3*s1*sa)
+                   +s2*(-l1*(c1*ca-s1*sa)-l2*(-c1*ca*s3+s1*s3*sa));
+      J[0][2] = l2*(c3*(-c1*c2*ca+c2*s1*sa)-s3*(-c1*ca*s2+s1*s2*sa));
+      
+      J[1][0] = c1*(l1*c2*ca+l2*(-c2*ca*s3-c3*ca*s2))
+                   +s1*(-l1*c2*sa-l2*(-c2*s3*sa-c3*s2*sa));
+      J[1][1] = l2*c2*(-c1*c3*sa-c3*ca*s1)
+                  +s2*(-l1*(c1*sa+ca*s1)-l2*(-c1*s3*sa-ca*s1*s3));
+      J[1][2] = l2*(c3*(-c1*c2*sa-c2*ca*s1)-s3*(-c1*s2*sa-ca*s1*s2));
+      
+      J[2][0] = 0.0;
+      J[2][1] = l2*c3*s2+c2*(-l1+l2*s3);
+      J[2][2] = l2*(c2*s3+c3*s2);
+}
+/**********************************************************************/
+void RoverFSW(struct SCType *S)
+{
+      struct AcType *AC;
+      struct BodyType *B;
+      struct RegionType *R;
+      struct AcJointType *Hip,*Knee;
+      struct CmdType *HipCmd,*KneeCmd;
+      
+      double PosCmd[3],VelCmd[3];
+      double YawCmd,PitchCmd,RollCmd;
+      double PosRR[3],VelRR[3],CBN[3][3],CBR[3][3];
+      double Roll,Pitch,Yaw;
+      double StridePeriod = 5.0;
+      double StrideAmp = 0.25;
+      double MaxSpd = 4.0*StrideAmp/StridePeriod;
+      double StrideFrac,Phase;
+      double alpha,ca,sa;
+      double c1,s1,c2,s2,c3,s3;
+      double J[3][3],Jinv[3][3];
+      double RestFootPos[3];
+      double PosFootCmd[3];
+      double PosFootB[3];
+      double th[3],dp[3],dth[3];
+      static double Krx,Kpx,Kra,Kpa;
+      static double wx,wy;
+      double r = 0.5;
+      double l1 = 0.5;
+      double l2 = 0.5;
+      double YawErr,PosErrR[3],VelErrR[3];
+      double PosErrB[3],MagPosErr,SpdCmd,YawRateCmd;
+      double phi,TurnRad;
+      
+      long i,Il;
+      static long Init = 1;
+      
+      AC = &S->AC;
+      B = &S->B[0];
+      
+      if (Init) {
+         Init = 0;
+         FindPDGains(S->mass,0.2*TwoPi,1.0,&Krx,&Kpx);
+         FindPDGains(S->I[2][2],0.2*TwoPi,0.7,&Kra,&Kpa);
+         wx = TwoPi/1000.0;
+         wy = TwoPi/700.0;
+      }
+      
+/* .. Position, Orientation in Region */
+      R = &Rgn[Orb[S->RefOrb].Region];
+      MxV(R->CN,S->PosR,PosRR);
+      MxV(R->CN,S->VelR,VelRR);
+      Q2C(B->qn,CBN);
+      MxMT(CBN,R->CN,CBR);
+      C2A(321,CBR,&Yaw,&Pitch,&Roll);
+      
+/* .. Generate position and attitude commands from path */
+      
+      PosCmd[0] = 20.0*sin(wx*SimTime);
+      PosCmd[1] = 15.0*sin(wy*SimTime);
+      VelCmd[0] = 20.0*wx*cos(wx*SimTime);
+      VelCmd[1] = 15.0*wy*cos(wy*SimTime);
+      
+      PosCmd[2] = 0.5;
+      VelCmd[2] = 0.0;
+      YawCmd = atan2(VelCmd[1],VelCmd[0]);
+      PitchCmd = 0.0;
+      RollCmd = 0.0;
+      
+/* .. Position, attitude errors */
+      for(i=0;i<3;i++) {
+         PosErrR[i] = PosRR[i] - PosCmd[i]; 
+         VelErrR[i] = VelRR[i] - VelCmd[i];
+      }
+      MxV(CBR,PosErrR,PosErrB);
+      MagPosErr = MAGV(PosErrB);
+      if (MagPosErr > 1.0) {
+         YawErr = Yaw + PosErrB[1]/MagPosErr;
+         while (YawErr < -Pi) YawErr += TwoPi;
+         while (Yaw > Pi) YawErr -= TwoPi;
+         YawRateCmd = Limit(-0.5*YawErr,-0.25,0.25);
+         if (fabs(YawErr) > 0.25) SpdCmd = 0.1*MaxSpd;
+         else SpdCmd = MaxSpd;
+      }
+      else {
+         YawErr = Yaw - YawCmd + 0.2*PosErrB[1]/MagPosErr;
+         while (YawErr < -Pi) YawErr += TwoPi;
+         while (Yaw > Pi) YawErr -= TwoPi;
+         YawRateCmd = Limit(-0.5*YawErr,-0.1,0.1);
+         SpdCmd = MAGV(VelCmd) - 0.5*PosErrB[0];
+      }
+      SpdCmd = Limit(SpdCmd,-MaxSpd,MaxSpd);
+      
+/* .. Leg position commands (in Body frame) */
+      if (SimTime < 3.0) {
+         for(Il=0;Il<6;Il++) {
+            Hip = &AC->G[Il];
+            Knee = &AC->G[Il+6];
+            HipCmd = &Hip->GCmd;
+            KneeCmd = &Knee->GCmd;
+            HipCmd->Ang[0] = 0.0;
+            HipCmd->Ang[1] = 0.0;
+            KneeCmd->Ang[0] = 0.0;
+            HipCmd->AngRate[0] = 0.0;
+            HipCmd->AngRate[1] = 0.0;
+            KneeCmd->AngRate[0] = 0.0;  
+         }
+      }
+      else {
+         StrideFrac = fmod(SimTime,StridePeriod)/StridePeriod;
+         for(Il=0;Il<6;Il++) {
+            Hip = &AC->G[Il];
+            Knee = &AC->G[Il+6];
+            HipCmd = &Hip->GCmd;
+            KneeCmd = &Knee->GCmd;
+            Phase = TwoPi*StrideFrac;
+            if (Il%2) Phase += Pi;
+            alpha = (60.0*((double) Il)+30.0)*D2R;
+            ca = cos(alpha);
+            sa = sin(alpha);
+            c1 = cos(Hip->Ang[0]);
+            s1 = sin(Hip->Ang[0]);
+            c2 = cos(Hip->Ang[1]);
+            s2 = sin(Hip->Ang[1]);
+            c3 = cos(Knee->Ang[0]);
+            s3 = sin(Knee->Ang[0]);
+            PosFootB[0] = r*ca + l1*c2*(c1*ca-s1*sa) 
+               + l2*((s1*sa-c1*ca)*(s2*c3+c2*s3));
+            PosFootB[1] = r*sa + l1*c2*(c1*sa+s1*ca)
+               - l2*((c1*sa+s1*ca)*(c2*s3+c3*s2));
+            PosFootB[2] = -l1*s2+l2*(s2*s3-c2*c3);
+            RestFootPos[0] = 1.0*ca;
+            RestFootPos[1] = 1.0*sa;
+            RestFootPos[2] = -0.4;
+            /* Walk with steering */
+            if (fabs(YawRateCmd) > SpdCmd/100.0) { /* Coordinated turn */
+               TurnRad = SpdCmd/YawRateCmd;
+               if (fabs(TurnRad) > 1.0) {
+                  phi = StrideAmp/fabs(TurnRad)*cos(Phase);
+                  phi *= signum(YawRateCmd)*fabs(SpdCmd)/MaxSpd;            
+               }
+               else {
+                  phi = StrideAmp*cos(Phase)*signum(YawRateCmd);
+               }
+               PosFootCmd[0] =  RestFootPos[0]*cos(phi)-(RestFootPos[1]-TurnRad)*sin(phi);
+               PosFootCmd[1] =  RestFootPos[0]*sin(phi)+(RestFootPos[1]-TurnRad)*cos(phi)+TurnRad;
+               PosFootCmd[2] =  RestFootPos[2];
+               if (sin(Phase)<0.0) PosFootCmd[2] -= StrideAmp*sin(Phase);
+            }
+            else { /* Walk straight */
+               PosFootCmd[0] = RestFootPos[0];
+               PosFootCmd[1] = RestFootPos[1];
+               PosFootCmd[2] = RestFootPos[2];
+               if (sin(Phase) > 0.0) { /* Foot Down */
+                  PosFootCmd[0] += SpdCmd*cos(Phase);
+               }
+               else { /* Foot Up */
+                  PosFootCmd[0] += SpdCmd*cos(Phase);
+                  PosFootCmd[2] -= StrideAmp*sin(Phase);
+               }
+            }
+      
+            /* Foot Position to Joint Angles */
+            LegPartials(S,Il,J);
+            MINV3(J,Jinv);
+            th[0] = Hip->Ang[0];
+            th[1] = Hip->Ang[1];
+            th[2] = Knee->Ang[0];
+            for(i=0;i<3;i++) dp[i] = PosFootB[i] - PosFootCmd[i];
+            MxV(Jinv,dp,dth);
+            HipCmd->Ang[0] -= 0.9*dth[0];
+            HipCmd->Ang[1] -= 0.9*dth[1];
+            KneeCmd->Ang[0] -= 0.9*dth[2];
+            HipCmd->AngRate[0] = -2.0*(Hip->Ang[0] - HipCmd->Ang[0]);
+            HipCmd->AngRate[1] = -2.0*(Hip->Ang[1] - HipCmd->Ang[1]);
+            KneeCmd->AngRate[0] = -2.0*(Knee->Ang[0] - KneeCmd->Ang[0]);  
+         }
+      }
+
+/* .. PD Control */
+#if 0
+      YawError = Yaw - YawCmd;
+      while (YawError > Pi) {
+         YawError -= TwoPi;
+      }
+      while (YawError < -Pi) {
+         YawError += TwoPi;
+      }
+      
+      for(i=0;i<3;i++) {
+         FcmdR[i] = -Krx*VelRR[i] - Kpx*(PosRR[i] - PosCmd[i]);
+         Tcmd[i] = -Kra*B->wn[i];
+      }
+      Tcmd[0] -= Kpa*(Roll-RollCmd);
+      Tcmd[1] -= Kpa*(Pitch-PitchCmd);
+      Tcmd[2] -= Kpa*YawError;
+      MxV(CBR,FcmdR,FcmdB);
+#endif
+}
+/**********************************************************************/
 /*  This function is called at the simulation rate.  Sub-sampling of  */
-/*  control loops should be done on a case-by-case basis.             */
+/*  control loops is managed by FswSampleCounter.                     */
 /*  Mode handling, command generation, error determination, feedback  */
 /*  and failure detection and correction all fall within the scope of */
 /*  this file.                                                        */
@@ -1791,8 +2029,8 @@ void AdHocFSW(struct SCType *S)
 void FlightSoftWare(struct SCType *S)
 {
       #ifdef _AC_STANDALONE_
-      struct IpcType *I;
-      long Iipc;
+      struct AcType *AC;
+      struct AcIpcType *I;
       #endif
             
       S->FswSampleCounter++;
@@ -1802,11 +2040,11 @@ void FlightSoftWare(struct SCType *S)
          switch(S->FswTag){
             case PASSIVE_FSW:
                break;
-            case PROTOTYPE_FSW:
-               PrototypeFSW(S);
+            case INSTANT_FSW:
+               InstantFSW(S);
                break;
-            case AD_HOC_FSW:
-               AdHocFSW(S);
+            case SANDBOX_FSW:
+               SandboxFSW(S);
                break;
             case SPINNER_FSW:
                SpinnerFSW(S);
@@ -1826,38 +2064,38 @@ void FlightSoftWare(struct SCType *S)
             case THR_FSW:
                ThrFSW(S);
                break;
+            case ROVER_FSW:
+               RoverFSW(S);
+               break;
             case CFS_FSW:
                #ifdef _AC_STANDALONE_
-               for(Iipc=0;Iipc<Nipc;Iipc++) {
-                  I = &IPC[Iipc];
-                  if (I->Mode == IPC_ACS && I->AcsID == S->AC.ID) {
-                     if (I->Init) {
-                        I->Init = 0;
-                        S->AC.ParmLoadEnabled = 1;
-                        S->AC.ParmDumpEnabled = 1;
-                        S->AC.EchoEnabled = 1;
+               I = &S->AcIpc;
+               AC = &S->AC;
+               if (I->Init) {
+                  I->Init = 0;
+                  
+                  I->Port = 10001 + AC->ID;
+                  I->Socket = InitSocketServer(I->Port,I->AllowBlocking);
+                        
+                  WriteAcArraySizesToSocket(AC,I);
+                  
+                  I->AcInBufLen = FindInBufLen(AC);
+                  I->AcOutBufLen = FindOutBufLen(AC);
+                  I->AcTblBufLen = FindTblBufLen(AC);
+                  WriteAcBufLensToSocket(I);
+                  
+                  I->AcInBuf = (char *) calloc(I->AcInBufLen,sizeof(char));
+                  I->AcOutBuf = (char *) calloc(I->AcOutBufLen,sizeof(char));
+                  I->AcTblBuf = (char *) calloc(I->AcTblBufLen,sizeof(char));
+                  WriteAcTblToSocket(AC,I);
 
-                        WriteToSocket(I->Socket,I->Prefix,I->Nprefix,I->EchoEnabled);
-                        ReadFromSocket(I->Socket,I->EchoEnabled);
-
-                        S->AC.ParmLoadEnabled = 0;
-                        S->AC.ParmDumpEnabled = 0;
-                     }
-                     else {
-                        WriteToSocket(I->Socket,I->Prefix,I->Nprefix,I->EchoEnabled);
-                        ReadFromSocket(I->Socket,I->EchoEnabled);
-                     }
-                  }
                }
+               WriteAcInToSocket(AC,I);
+               ReadAcOutFromSocket(AC,I);
                #else
                   AcFsw(&S->AC);
                #endif
                break;
-            #ifdef _ENABLE_RBT_
-               case RBT_FSW:
-                  RbtFSW(S);
-                  break;
-            #endif
          }
          
       }

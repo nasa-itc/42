@@ -79,7 +79,7 @@ void FindUnshadedAreas(struct SCType *S, double DirVecN[3])
       struct SilVtxType *InVtx = NULL;
       struct SilVtxType *ClipVtx;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *G;
       struct EdgeType *E;
       struct PolyType *P;
       double DirVecB[3],DoN1,DoN2;
@@ -99,7 +99,7 @@ void FindUnshadedAreas(struct SCType *S, double DirVecN[3])
       SilNe = 0;
       for(Ib=0;Ib<S->Nb;Ib++) {
          B = &S->B[Ib];
-         G = &Geom[B->GeomTag];
+         G = &Mesh[B->MeshTag];
          MxV(B->CN,DirVecN,DirVecB);
          for(Ie=0;Ie<G->Nedge;Ie++) {
             E = &G->Edge[Ie];
@@ -197,7 +197,7 @@ void FindUnshadedAreas(struct SCType *S, double DirVecN[3])
 /* .. Find unshaded areas, centroids */
       for(Ib=0;Ib<S->Nb;Ib++) {
          B = &S->B[Ib];
-         G = &Geom[B->GeomTag];
+         G = &Mesh[B->MeshTag];
          MxV(B->CN,DirVecN,DirVecB);
          for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
             P = &G->Poly[Ipoly];
@@ -330,7 +330,7 @@ void GravGradFrcTrq(struct SCType *S)
       if ((O->Regime == ORB_ZERO || O->Regime == ORB_FLIGHT) &&
            O->PolyhedronGravityEnabled) {
          W = &World[O->World];
-         PolyhedronGravGrad(&Geom[W->GeomTag],W->Density,S->PosN,W->CWN,
+         PolyhedronGravGrad(&Mesh[W->MeshTag],W->Density,S->PosN,W->CWN,
             GravGradN);
 
          if (S->Nb == 1) {
@@ -496,7 +496,7 @@ void AeroFrcTrq(struct SCType *S)
       long Ipoly;
       long OrbCenter;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *G;
       struct PolyType *P;
 
       OrbCenter = Orb[S->RefOrb].World;
@@ -523,7 +523,7 @@ void AeroFrcTrq(struct SCType *S)
          /* Find total projected area and cp for Body */
          Area = 0.0;
          for(i=0;i<3;i++) cp[i] = 0.0;
-         G = &Geom[B->GeomTag];
+         G = &Mesh[B->MeshTag];
          for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
             P = &G->Poly[Ipoly];
                if (strncmp(Matl[P->Matl].Label,"SHADED",6)) { /* Aero doesn't see shaded polys */
@@ -558,7 +558,7 @@ void SolPressFrcTrq(struct SCType *S)
       long Ipoly;
       double svb[3],SoN,Coef,r[3],Fb[3],Fn[3],Tb[3],SolarPressure;
       struct BodyType *B;
-      struct GeomType *G;
+      struct MeshType *G;
       struct PolyType *P;
       struct MatlType *M;
 
@@ -574,7 +574,7 @@ void SolPressFrcTrq(struct SCType *S)
 /* .. Find Force and Torque on each Body */
          for(Ib=0;Ib<S->Nb;Ib++) {
             B = &S->B[Ib];
-            G = &Geom[B->GeomTag];
+            G = &Mesh[B->MeshTag];
 
             /* Find force and torque on each illuminated polygon */
             for(Ipoly=0;Ipoly<G->Npoly;Ipoly++) {
@@ -649,7 +649,7 @@ void FindPosVelR(struct SCType *S,struct BodyType *B, double PosB[3],
 void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
    struct RegionType *R)
 {
-      struct GeomType *Gb,*Gr;
+      struct MeshType *Gb,*Gr;
       struct BodyType *B;
       struct PolyType *Pb,*Pr;
       struct EdgeType *E;
@@ -659,23 +659,28 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
       double PosP[3],VelP[3];
       double FrcP[3];
       double ContactArea;
+      double ElastFrc;
       double Dist,MinDist;
       double PosR[3],VelR[3],RelPosR[3],PosRR[3];
-      static long HitPoly = 0;
       long OtherPoly;
       long Ib,Ie,i,Done;
       double Fn[3],Fb[3],Tb[3];
+      double MagFrc;
+      double MaxMagFrc;
 
       B = &S->B[Ibody];
-      Gb = &Geom[B->GeomTag];
-      Gr = &Geom[R->GeomTag];
+      Gb = &Mesh[B->MeshTag];
+      Gr = &Mesh[R->MeshTag];
 
       for(i=0;i<3;i++) {
          FrcN[i] = 0.0;
          FrcB[i] = 0.0;
          TrqB[i] = 0.0;
       }
-
+      
+      /* Limit force magnitude to elastic collision impulse plus max gravity */
+      MaxMagFrc = 2.0*S->mass*MAGV(S->VelR)/DTSIM + 10.0*S->mass;
+      
       /* Loop through all Polys (Pb) in Gb */
       for(Ib=0;Ib<Gb->Npoly;Ib++) {
          Pb = &Gb->Poly[Ib];
@@ -688,19 +693,19 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
          Done = 0;
          while(!Done) {
             Done = 1;
-            for(i=0;i<3;i++) RelPosR[i] = PosRR[i] - Gr->Poly[HitPoly].Centroid[i];
+            for(i=0;i<3;i++) RelPosR[i] = PosRR[i] - Gr->Poly[Pb->ContactPoly].Centroid[i];
             MinDist = MAGV(RelPosR);
             /* Check neighboring polys */
             for(Ie=0;Ie<3;Ie++) {
-               E = &Gr->Edge[Gr->Poly[HitPoly].E[Ie]];
+               E = &Gr->Edge[Gr->Poly[Pb->ContactPoly].E[Ie]];
                if (E->Poly1 >= 0 && E->Poly2 >= 0) { /* Screen edges of region */
-                  OtherPoly = (E->Poly1 == HitPoly ? E->Poly2 : E->Poly1);
+                  OtherPoly = (E->Poly1 == Pb->ContactPoly ? E->Poly2 : E->Poly1);
                   for(i=0;i<3;i++)
                      RelPosR[i] = PosRR[i] - Gr->Poly[OtherPoly].Centroid[i];
                   Dist = MAGV(RelPosR);
                   if (Dist < MinDist) {
                      MinDist = Dist;
-                     HitPoly = OtherPoly;
+                     Pb->ContactPoly = OtherPoly;
                      Done = 0;
                      break;
                   }
@@ -709,7 +714,7 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
          }
 
          /* Interact with selected poly */
-         Pr = &Gr->Poly[HitPoly];
+         Pr = &Gr->Poly[Pb->ContactPoly];
          MTxV(R->CN,Pr->Centroid,prn);
          VxV(R->wn,Pr->Centroid,wxrb);
          MTxV(R->CN,wxrb,vrn);
@@ -733,14 +738,16 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
             if (PosP[2] > 0.0) {
                ContactArea = (1.0-PosP[2]/Pb->radius)*Pb->Area;
                FrcP[2] = -R->DampCoef*VelP[2]*ContactArea;
-               FrcP[0] = 0.0;
-               FrcP[1] = 0.0;
+               
             }
             else {
                ContactArea = (1.0-PosP[2]/Pb->radius)*Pb->Area;
-               FrcP[2] = -(R->ElastCoef*PosP[2] + R->DampCoef*VelP[2])*ContactArea;
-               FrcP[0] = -R->FricCoef*FrcP[2]*VelP[0];
-               FrcP[1] = -R->FricCoef*FrcP[2]*VelP[1];
+               ContactArea = Limit(ContactArea,0.0,2.0*Pb->Area);
+               PosP[2] = Limit(PosP[2],-Pb->radius,0.0);
+               ElastFrc = -R->ElastCoef*PosP[2]*ContactArea;
+               FrcP[2] = ElastFrc - R->DampCoef*VelP[2]*ContactArea;
+               FrcP[0] = -R->DampCoef*VelP[0]*ContactArea;
+               FrcP[1] = -R->DampCoef*VelP[1]*ContactArea;
             }
          }
 
@@ -753,6 +760,15 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
             FrcN[i] += Fn[i];
             FrcB[i] += Fb[i];
             TrqB[i] += Tb[i];
+         }
+      }
+      
+      MagFrc = MAGV(FrcN);
+      if (MagFrc > MaxMagFrc) {
+         for(i=0;i<3;i++) {
+            FrcN[i] *= MaxMagFrc/MagFrc;
+            FrcB[i] *= MaxMagFrc/MagFrc;
+            TrqB[i] *= MaxMagFrc/MagFrc;
          }
       }
 
@@ -768,7 +784,7 @@ void BodyRgnContactFrcTrq(struct SCType *S, long Ibody,
 void BodyBodyContactFrcTrq(struct SCType *Sa, long Ibody,
    struct SCType *Sb, long Jbody)
 {
-      struct GeomType *Ga,*Gb;
+      struct MeshType *Ga,*Gb;
       struct BodyType *Ba,*Bb;
       struct PolyType *Pa,*Pb;
       struct OctreeType *Oa,*Ob;
@@ -794,8 +810,8 @@ void BodyBodyContactFrcTrq(struct SCType *Sa, long Ibody,
 
       Ba = &Sa->B[Ibody];
       Bb = &Sb->B[Jbody];
-      Ga = &Geom[Ba->GeomTag];
-      Gb = &Geom[Bb->GeomTag];
+      Ga = &Mesh[Ba->MeshTag];
+      Gb = &Mesh[Bb->MeshTag];
       Oa = Ga->Octree;
       Ob = Gb->Octree;
 
@@ -915,10 +931,10 @@ void ContactFrcTrq(struct SCType *S)
       struct RegionType *R;
       struct SCType *Sc;
       struct BodyType *Bi,*Bj;
-      struct GeomType *Gi,*Gj;
+      struct MeshType *Gi,*Gj;
       double dx[3],cmb[3],cmni[3],cmnj[3];
       long Ir,i,Ib,Isc,Jb;
-
+      
       O = &Orb[S->RefOrb];
 
 /* .. Contact with Regions */
@@ -928,7 +944,7 @@ void ContactFrcTrq(struct SCType *S)
          if (!R->Exists) continue;
          if (R->World != O->World) continue;
          for(i=0;i<3;i++) dx[i] = S->PosN[i] - R->PosN[i];
-         if (MAGV(dx) > S->BBox.radius + Geom[R->GeomTag].BBox.radius) continue;
+         if (MAGV(dx) > S->BBox.radius + Mesh[R->MeshTag].BBox.radius) continue;
 
          /* Check each body vs Region */
          for(Ib=0;Ib<S->Nb;Ib++) {
@@ -949,13 +965,13 @@ void ContactFrcTrq(struct SCType *S)
          /* Check each body of S vs each body of Sc */
          for(Ib=0;Ib<S->Nb;Ib++) {
             Bi = &S->B[Ib];
-            Gi = &Geom[Bi->GeomTag];
+            Gi = &Mesh[Bi->MeshTag];
             for(i=0;i<3;i++) cmb[i] = Bi->cm[i] - Gi->BBox.center[i];
             MTxV(Bi->CN,cmb,cmni);
             for(Jb=0;Jb<Sc->Nb;Jb++) {
                /* Cheap Bi/Bj proximity checks */
                Bj = &Sc->B[Jb];
-               Gj = &Geom[Bj->GeomTag];
+               Gj = &Mesh[Bj->MeshTag];
                for(i=0;i<3;i++) cmb[i] = Bj->cm[i] - Gj->BBox.center[i];
                MTxV(Bj->CN,cmb,cmnj);
                for(i=0;i<3;i++)

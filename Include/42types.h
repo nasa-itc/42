@@ -12,7 +12,7 @@
 /*    All Other Rights Reserved.                                      */
 
 
-#include "geomkit.h"
+#include "meshkit.h"
 #include "orbkit.h"
 #include "sigkit.h"
 #include "AcTypes.h"
@@ -49,46 +49,62 @@ struct NodeType {
    char comment[80]; 
    double NomPosB[3];
    double PosCm[3]; /* Pos wrt B's cm, expressed in B */
-   double **PSI, **THETA; /* Mode shapes, 3 x B.Nf */
-   double Frc[3],Trq[3]; /* Both expressed in B */
-   double *FlexFrc;  /* "Fbendy + Tbendy", B.Nf x 1 */
-   double FlexPos[3],FlexVel[3],FlexAng[3],FlexAngRate[3]; /* Deflection variables */
-   double PosB[3],VelB[3],VelN[3],qb[4],AngVelB[3];
+   double **PSI;  /* Translational Mode shapes, 3 x B.Nf */
+   double **THETA; /* Rotational Mode shapes, 3 x B.Nf */
+   double Frc[3];  /* Expressed in B */
+   double Trq[3]; /* Expressed in B */
+   double *FlexFrc;  /* "Fbendy + Tbendy", B.Nf x 1 [*Nf*] */
+   double FlexPos[3];
+   double FlexVel[3];
+   double FlexAng[3];
+   double FlexAngRate[3]; /* Deflection variables */
+   double PosB[3];
+   double VelB[3];
+   double VelN[3];
+   double qb[4];
+   double AngVelB[3];
+   long ContactPoly; /* Remember Region poly for contact constraint */
 };
 
 struct ShakerType {
-   /*~ Parameters ~*/
+   /*~ Table Parameters ~*/
    long Body;
    long Node;
    long FrcTrq;
    double Axis[3];
    long Ntone;
    long RandomActive;
-   double *ToneAmp; /* N or Nm */
-   double *ToneFreq; /* For tonic, rad/sec */
-   double *TonePhase; /* For tonic, rad */
-   struct RandomProcessType *RandomProc;
-   struct FilterType *Lowpass;
-   struct FilterType *Highpass;
+   double *ToneAmp; /* N or Nm [*Ntone*] */
+   double *ToneFreq; /* For tonic, rad/sec [*Ntone*] */
+   double *TonePhase; /* For tonic, rad [*Ntone*] */
    double LowBandLimit; /* rad/sec */
    double HighBandLimit; /* rad/sec */
    double RandStd; /* Std Dev of band-limited random input, N or Nm */
+   
+   /*~ Outputs ~*/
+   double Output;
 
    /*~ Internal Variables ~*/
-   double Output;
+
+   /*~ Structures ~*/
+   struct RandomProcessType *RandomProc;
+   struct FilterType *Lowpass;
+   struct FilterType *Highpass;
    struct FilterType *Rand; /* White noise in, band-limited noise out */
 };
 
 struct BodyType {
+   /*~ Outputs ~*/
+   double wn[3]; /* Angular Velocity of B wrt N expressed in B frame [[rad/sec]] [~=~] */
+   double qn[4]; /* [~=~] */
+
    /*~ Internal Variables ~*/
    double mass;
    double cm[3]; /* wrt origin of convenience, expressed in B frame */
    double c[3]; /* First mass moment about ref pt, expressed in B */
-   double I[3][3]; /* Moment of Inertia, about ref pt, expressed in B frame */
+   double I[3][3]; /* Moment of Inertia, about ref pt, expressed in B frame */ 
    double EmbeddedMom[3]; /* Constant embedded momentum, for CMGs and rotating instruments */
    double EmbeddedDipole[3]; /* Constant embedded magnetic moment [[A-m^2]] */
-   double wn[3]; /* Angular Velocity of B wrt N expressed in B frame [[rad/sec]] [~=~] */
-   double qn[4]; /* [~=~] */
    double vn[3]; /* velocity of B ref pt expressed in N frame */
    double pn[3]; /* position of B ref pt in N frame expressed in N frame */
    double CN[3][3]; /* Direction Cosine of B frame in N frame */
@@ -96,11 +112,11 @@ struct BodyType {
    double FrcN[3]; /* expressed in N */
    double alpha[3]; /* Angular acceleration of B wrt N, expressed in B */
    double accel[3]; /* Linear acceleration of B wrt N, expressed in N */
-   char GeomFileName[40];
+   char MeshFileName[40];
    char NodeFileName[40];
    char FlexFileName[40];
    float ModelMatrix[16]; /* For OpenGL */
-   long GeomTag;
+   long MeshTag;
    /* For KaneNBody Dynamics */
    long Gin;  /* Joint that B is Bout of */
    double beta[3];  /* Vector from B ref pt to B[0] ref pt, expressed in N */
@@ -112,7 +128,7 @@ struct BodyType {
    
    /* For OrderN Dynamics */
    long Nd; /* Number of distal joints (i.e. for which this body is Bi) */
-   long *Gd; /* Indices of distal joints (i.e. for which this body is Bi) */
+   long *Gd; /* Indices of distal joints (i.e. for which this body is Bi) [*Nd*] */
    double RemAlf[3];
    double RemAcc[3];
    double alfn[3];
@@ -127,7 +143,7 @@ struct BodyType {
 
    /* For Flex Formulation */
    long Nf;  /* Number of flex modes superimposed on this body */
-   double *xi;    /* Flex speed coordinate, Nf x 1 */
+   double *xi;    /* Flex speed coordinate, Nf x 1 [*Nf*] */
    double *eta;   /* Flex position coordinate, Nf x 1 */
    double **Mf;   /* Flex Mass Matrix, Nf x Nf */
    double **Kf;   /* Flex Stiffness Matrix, Nf x Nf */
@@ -147,12 +163,19 @@ struct BodyType {
    double *Sw;  /* Sf*w, 3 x Nf * Nf */
    double **Swe;  /* Sf*w*eta, 3 x Nf */
    long NumNodes;  /* Number of flex "analysis" nodes on Body */
-   struct NodeType *Node;
    long MfIsDiagonal;  /* Simpler EOM for One-body case if Mf is diagonal */
    
+   /*~ Structures ~*/   
+   struct NodeType *Node; /* [*NumNodes*] */
 };
 
 struct JointType {
+   /*~ Outputs ~*/
+   double Pos[3];         /* translational kinematic state variables [~=~] */
+   double PosRate[3];     /* translational dynamic state variables [~=~] */
+   double Ang[3];         /* Joint Euler angles [~=~] */
+   double AngRate[3];     /* Euler angle rates about gim axes [~=~] */
+   
    /*~ Internal Variables ~*/
    long Type;  /* PASSIVE_JOINT, ACTUATED_JOINT, etc */ 
    long Init;
@@ -173,12 +196,8 @@ struct JointType {
    long RotLocked[3];     /* Set TRUE if individual DOF is to be locked in place */
    long TrnSeq;           /* Translational joint sequence */
    long TrnLocked[3];
-   double Pos[3];         /* translational kinematic state variables [~=~] */
-   double PosRate[3];     /* translational dynamic state variables [~=~] */
    double xb[3];          /* translational displacement in the Bi frame */
    double xn[3];          /* translational displacement in the N frame */
-   double Ang[3];         /* Joint Euler angles [~=~] */
-   double AngRate[3];     /* Euler angle rates about gim axes [~=~] */
    double AngRateCmd[3];     /* Euler angle rate commands, rad/sec */
    double PosRateCmd[3];     /* Translation rate commands, m/sec */
    double AngRateGain[3];
@@ -264,6 +283,7 @@ struct IdealActType {
    /*~ Internal Variables ~*/
    double Tcmd;
    double Fcmd;
+   
    struct DelayType *FrcDelay;
    struct DelayType *TrqDelay;
 };
@@ -276,9 +296,11 @@ struct WhlHarmType {
 };
 
 struct WhlType {
+   /*~ Outputs ~*/
+   double H;  /* Angular Momentum, [[Nms]] [~=~] */
+   
    /*~ Internal Variables ~*/
    long Body; /* Body that wheel is mounted in */
-   double H;  /* Angular Momentum, [[Nms]] [~=~] */
    double J;  /* Rotary inertia, kg-m^2 */
    double w;  /* Angular speed, rad/sec */
    double Ang; /* Spin phase angle, rad */
@@ -368,9 +390,11 @@ struct GyroType {
    double AngNoiseCoef;
    double CorrCoef; /* Correlation Coef, exp(-SampleTime/BiasTime) */
 
+   /*~ Outputs ~*/
+   double TrueRate; /* rad/sec [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   double TrueRate; /* rad/sec [~>~] */
    double Bias; /* rad/sec */
    double Angle; /* rad */
    double MeasRate; /* rad/sec */
@@ -431,6 +455,10 @@ struct FssType {
    double SunAng[2];
    double SunVecS[3];
    double SunVecB[3];
+   double AlbA;
+   double AlbB;
+   double AlbC;
+   double AlbD;
 };
 
 struct StarTrackerType {
@@ -496,6 +524,7 @@ struct AccelType {
    double SigE; /* DV Readout Noise, m/s  */
    
    /*~ Internal Variables ~*/
+   double AccumAccN[3];
    double Bias; /* m/s^2 */
    double PrevVelN[3]; /* m/s */
    double PrevQN[4];
@@ -511,6 +540,76 @@ struct AccelType {
    double DVRWCoef;
    double DVNoiseCoef; 
    double CorrCoef; /* Correlation Coef, exp(-SampleTime/BiasTime) */
+};
+
+struct OpticsType {
+   long SC;
+   long Body;
+   long Node;
+   long Type;
+   double Axis[3];
+   double FocLen;
+   double ConicConst;
+   double ConicSign;   
+   double ApRad;
+};
+
+struct GuideWindowType {
+   /*~ Parameters ~*/
+   long Nrow;
+   long Ncol;
+
+   /*~ Internal Variables ~*/
+   long Row0;
+   long Col0;
+   double *Image; /* Nrow x Ncol, grayscale */
+};
+
+struct PsfType {
+   long Nrow;
+   long Ncol;
+   long BytesPerPixel;
+   double Scl; /* rad/pixel */
+   double *Image;
+};
+
+struct FgsType {
+   /*~ Parameters ~*/
+   long HasOptics;
+   double SampleTime;
+   long MaxCounter;
+   double qb[4];
+   double CB[3][3];
+   double qr[4]; /* q_fr_r */
+   double CR[3][3]; /* CFrR */
+   double NEA;
+   long Body;
+   long Node;
+   long BoreAxis; /* X_AXIS, Y_AXIS, Z_AXIS */
+   long H_Axis; /* (BoreAxis+1)%3 */
+   long V_Axis; /* (BoreAxis+2)%3 */
+   double FovHalfAng[2];
+   double Scl; /* rad/pixel */
+   double Hr; /* Guide Star in Fr */
+   double Vr; /* Guide Star in Fr */
+
+   /*~ Internal Variables ~*/
+   long SampleCounter;
+   long Valid;
+   double StarVecR[3];
+   double H; 
+   double V;
+   double Ang[3];
+   char OpticsFileName[40];
+   char PsfFileName[40];
+   
+   long Nopt;
+   struct OpticsType *Opt;
+   long ApFocus;
+   long DetFocus;
+
+   struct PsfType PSF;   
+   struct GuideWindowType Gw;
 };
 
 struct JointPathTableType { /* tells if joint is in path of body*/
@@ -578,7 +677,33 @@ struct EnvTrqType {
    double Hs[3];
 };
 
+struct IpcType {
+   /*~ Internal Variables ~*/
+   long Init;
+   long Enabled;
+   long Mode; /* OFF, TX, RX, TXRX, WRITEFILE, READFILE */
+   long SocketRole; /* SERVER, CLIENT, GMSEC_CLIENT */
+   long AcsID;  /* AC.ID for ACS mode */
+   char HostName[40];
+   long Port;
+   long AllowBlocking;
+   long EchoEnabled;
+   SOCKET Socket;
+   FILE *File;
+   long Nprefix;
+   char **Prefix;
+};
+
 struct SCType {
+   /*~ Outputs ~*/
+   double qn[4]; /* Attitude of Body 0 in N [~=~] */
+   double wn[3]; /* Angular rates of Body 0 in N [[rad/sec]] [~=~] */
+   double PosR[3]; /* Position of cm wrt Reference Orbit [[m]], expressed in N [~=~] */
+   double VelR[3]; /* Velocity of cm wrt R [[m/s]], expressed in N [~=~] */
+   double svb[3]; /* Sun-pointing unit vector, expressed in SC.B[0] [~=~] */
+   double bvb[3]; /* Magfield [[Tesla]], expressed in SC.B[0] [~=~] */
+   double Hvb[3]; /* Total SC angular momentum [[Nms]], expressed in SC.B[0] [~=~] */
+
    /*~ Internal Variables ~*/
    long ID;     /* SC[x].ID = x */
    long Exists;
@@ -586,7 +711,7 @@ struct SCType {
    long DynMethod;  /* GAUSS_ELIM, ORDER_N */
    long OrbDOF;  /* FIXED, EULER_HILL, ENCKE, COWELL */
    long RefOrb;
-   long FswTag;  /* Tag for FSW function, eg. PROTOTYPE_FSW */
+   long FswTag;  /* Tag for FSW function, eg. INSTANT_FSW */
    double FswSampleTime;
    long FswMaxCounter;
    long FswSampleCounter;
@@ -606,28 +731,26 @@ struct SCType {
    long Nst; /* Number of star trackers */
    long Ngps; /* Number of GPS receivers */
    long Nacc; /* Number of accelerometer axes */
+   long Nfgs; /* Number of Fine Guidance Sensors */
    long Nsh; /* Number of shakers */
    
    double mass;
    double cm[3]; /* wrt B0 origin, expressed in B0 frame */
    double I[3][3]; /* Inertia matrix, wrt SC.cm, expressed in B0 frame */
-   double PosR[3]; /* Position of cm wrt Reference Orbit [[m]], expressed in N [~=~] */
-   double VelR[3]; /* Velocity of cm wrt R [[m/s]], expressed in N [~=~] */
    double PosEH[3];  /* Position of cm wrt R, m, in Euler-Hill coords */
    double VelEH[3];  /* Velocity of cm wrt R, m, in Euler-Hill coords */
    double PosN[3];   /* Position of cm wrt origin of N, m, expressed in N */
    double VelN[3];   /* Velocity of cm wrt origin of N, m/sec, expressed in N */
    double CLN[3][3]; /* Note that SC.CLN != Orb[RefOrb].CLN if SC.PosR != 0.0 */
+   double CEN[3][3]; /* E = Equatorial frame: e1 = North, e2 = East, e3 = Nadir */
    double wln[3]; /* Expressed in N */
    double PosH[3];  /* Position of cm wrt H frame, expressed in H */
    double VelH[3];  /* Velocity of cm wrt H frame, expressed in H */
    double FrcN[3]; /* Force, N, expressed in N */
+   double AccN[3]; /* Acceleration due to external force, for accelerometer model */
    double svn[3]; /* Sun-pointing unit vector, expressed in N */
-   double svb[3]; /* Sun-pointing unit vector, expressed in SC.B[0] [~=~] */
    double bvn[3]; /* Magfield, Tesla, expressed in N */
-   double bvb[3]; /* Magfield [[Tesla]], expressed in SC.B[0] [~=~] */
    double Hvn[3]; /* Total SC angular momentum, Nms, expressed in N */
-   double Hvb[3]; /* Total SC angular momentum [[Nms]], expressed in SC.B[0] [~=~] */
    long Eclipse;
    double AtmoDensity;
    double DragCoef;
@@ -679,7 +802,12 @@ struct SCType {
    struct StarTrackerType *ST;   /* [*Nst*] */
    struct GpsType *GPS;          /* [*Ngps*] */
    struct AccelType *Accel;      /* [*Nacc*] */
+   struct FgsType *Fgs;          /* [*Nfgs*] */
    struct ShakerType *Shaker;    /* [*Nsh*] */
+   
+   #ifdef _AC_STANDALONE_
+   struct AcIpcType AcIpc;
+   #endif
 };
 
 struct TargetType {
@@ -749,8 +877,8 @@ struct RegionType {
    double wn[3]; /* Expressed in R frame */
    double ElastCoef,DampCoef,FricCoef;
    char Name[20];
-   char GeomFileName[40];
-   long GeomTag;
+   char MeshFileName[40];
+   long MeshTag;
    float ModelMatrix[16]; /* For OpenGL */
 };
 
@@ -769,7 +897,10 @@ struct AtmoType {
 };
 
 struct WorldType {
-   /*~ Parameters ~*/
+   /*~ Outputs ~*/
+   double PosH[3];         /* Position in H frame [~=~] */
+   
+   /*~ Internal Variables ~*/
    
    /* Relationships */
    long Exists;
@@ -791,12 +922,11 @@ struct WorldType {
    double RingInner, RingOuter;
    double Density; /* For minor bodies, polyhedron gravity */
 
-
    /* Graphical Properties */
    long HasRing;
    char Name[20];
    char MapFileName[40];
-   char GeomFileName[40];
+   char MeshFileName[40];
    char ColTexFileName[40];
    char BumpTexFileName[40];
    float Color[4];
@@ -808,22 +938,19 @@ struct WorldType {
    unsigned int ColCubeTag;
    unsigned int BumpCubeTag;
    unsigned int CloudGlossCubeTag;
-   long GeomTag;
+   long MeshTag;
    unsigned int RingTexTag;
    double NearExtent,FarExtent;
 
-   double CNH[3][3]; /* DCM from heliocentric ecliptic frame
-                        to world-centric equatorial inertial frame */
-   double qnh[4]; /* ~*/
+   double CNH[3][3]; /* DCM from heliocentric ecliptic frame to world-centric equatorial inertial frame */
+   double qnh[4]; 
+   double CNJ[3][3]; /* DCM from J2000 frame to world-centric equatorial inertial frame */
+   double qnj[4];
 
-   /*~ Internal Variables ~*/
-   
-   double PosH[3];         /* Position in H frame [~=~] */
    double VelH[3];         /* Velocity in H frame */
    double PriMerAng; /* Angle from N1 to prime meridian */
-   double CWN[3][3]; /* DCM from world-centric inertial frame
-                        to world-centric rotating frame */
-   double qwn[4]; /* ~*/
+   double CWN[3][3]; /* DCM from world-centric inertial frame to world-centric rotating frame */
+   double qwn[4]; 
    long Visibility; /* Too small to see, point-sized, or shows disk */
    float ModelMatrix[16];
 
@@ -936,6 +1063,7 @@ struct OrreryPOVType {
 };
 
 struct ConstellationType {
+   /*~ Internal Variables ~*/
    char Tag[4]; 
    long Class;  /* MAJOR, ZODIAC, or MINOR */
    long Nstars;
@@ -946,20 +1074,6 @@ struct ConstellationType {
    long *Star2;
 };
 
-struct IpcType {
-   long Init;
-   long Mode; /* OFF, TX, RX, TXRX, ACS, WRITEFILE, READFILE */
-   long SocketRole; /* SERVER, CLIENT, GMSEC_CLIENT */
-   long AcsID;  /* AC.ID for ACS mode */
-   char HostName[40];
-   long Port;
-   long AllowBlocking;
-   long EchoEnabled;
-   SOCKET Socket;
-   FILE *File;
-   long Nprefix;
-   char **Prefix;
-};
 
 /*
 ** #ifdef __cplusplus
