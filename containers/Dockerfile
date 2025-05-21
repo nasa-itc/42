@@ -10,16 +10,20 @@ ARG GIT_BRANCH=master
 ARG VNC_PASSWORD=0123456789
 
 ################################################################################
-FROM ${IMAGE_URI}
+FROM ${IMAGE_URI} AS x-vnc
 ################################################################################
+ARG VNC_PASSWORD
+ENV VNC_PASSWORD=${VNC_PASSWORD}
 
+
+################################################################################
+FROM x-vnc AS fortytwo
+################################################################################
 ARG GIT_URL
 ARG GIT_BRANCH
-ARG VNC_PASSWORD
 
 ENV GIT_URL=${GIT_URL}
 ENV GIT_BRANCH=${GIT_BRANCH}
-ENV VNC_PASSWORD=${VNC_PASSWORD}
 
 # VNC Config
 RUN mkdir -p ~/.vnc/
