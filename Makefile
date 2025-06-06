@@ -381,26 +381,26 @@ $(OBJ)ScIPC.o  : $(AUTOSRC)ScIPC.c $(INC)42.h $(INC)42types.h $(INC)Ac.h $(INC)A
 $(OBJ)AcIPC.o  : $(AUTOSRC)AcIPC.c $(INC)Ac.h $(INC)AcTypes.h
 	$(CC) $(CFLAGS) -c $(AUTOSRC)AcIPC.c -o $(OBJ)AcIPC.o
 	
-#$(AUTOSRC)AcIPC.c  : $(META)Ac.json
-#	julia $(META)JsonToAcIPC.jl
+$(AUTOSRC)AcIPC.c  : $(META)Ac.json
+	julia $(META)JsonToAcIPC.jl
 	
-#$(AUTOSRC)ScIPC.c  : $(META)Ac.json
-#	julia $(META)JsonToAcIPC.jl
+$(AUTOSRC)ScIPC.c  : $(META)Ac.json
+	julia $(META)JsonToAcIPC.jl
 	
-#$(AUTOSRC)TxRxIPC.c  : $(META)42.json $(META)Ac.json
-#	julia $(META)JsonToTxRxIPC.jl
+$(AUTOSRC)TxRxIPC.c  : $(META)42.json $(META)Ac.json
+	julia $(META)JsonToTxRxIPC.jl
 	
-#$(AUTOSRC)WriteAcToCsv.c  : $(META)Ac.json
-#	julia $(META)JsonToAcCsv.jl
+$(AUTOSRC)WriteAcToCsv.c  : $(META)Ac.json
+	julia $(META)JsonToAcCsv.jl
 
-#$(AUTOSRC)WriteScToCsv.c  : $(META)42.json
-#	julia $(META)JsonToScCsv.jl
+$(AUTOSRC)WriteScToCsv.c  : $(META)42.json
+	julia $(META)JsonToScCsv.jl
 
-#$(META)42.json  : $(INC)42types.h $(KITINC)orbkit.h
-#	julia $(META)HeadersToJson.jl
+$(META)42.json  : $(INC)42types.h $(KITINC)orbkit.h
+	julia $(META)HeadersToJson.jl
 
-#$(META)Ac.json  : $(INC)AcTypes.h 
-#	julia $(META)HeadersToJson.jl
+$(META)Ac.json  : $(INC)AcTypes.h 
+	julia $(META)HeadersToJson.jl
 
 $(OBJ)42nos3.o         : $(SRC)42nos3.c
 	$(CC) $(CFLAGS) -c $(SRC)42nos3.c -o $(OBJ)42nos3.o

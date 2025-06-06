@@ -282,8 +282,9 @@ void ReadFromSocket(SOCKET Socket, long EchoEnabled)
 
       NumBytes = read(Socket,Msg,16384);
       if (NumBytes < 0) {
-         printf("Error reading from socket in ReadFromSocket.\n");
-         exit(1);
+         //printf("Error reading from socket in ReadFromSocket.\n");
+         //exit(1);
+         return;
       }
       write(Socket,Ack,4);
 

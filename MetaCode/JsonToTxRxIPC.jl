@@ -128,8 +128,9 @@ function BeginReadFunction(S)
       
       F *= "      NumBytes = read(Socket,Msg,16384);\n";
       F *= "      if (NumBytes < 0) {\n";
-      F *= "         printf(\"Error reading from socket in ReadFromSocket.\\n\");\n";
-      F *= "         exit(1);\n";
+      F *= "         //printf(\"Error reading from socket in ReadFromSocket.\\n\");\n";
+      F *= "         //exit(1);\n";
+      F *= "         return;\n";
       F *= "      }\n";
       F *= "      write(Socket,Ack,4);\n\n";
       
