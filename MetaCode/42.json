@@ -251,30 +251,149 @@
          "Table Name": "CssType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Valid",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "Illum",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Description": "Units defined by scale"
+            }
          ]
       },
       {
          "Table Name": "FssType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Valid",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "SunAng",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "2"
+            }
          ]
       },
       {
          "Table Name": "StarTrackerType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Valid",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "qn",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "4"
+            }
          ]
       },
       {
          "Table Name": "GpsType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Valid",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "Rollover",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "Week",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "long"
+            },
+            {
+               "Variable Name": "Sec",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double"
+            },
+            {
+               "Variable Name": "PosN",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "3"
+            },
+            {
+               "Variable Name": "VelN",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "3"
+            },
+            {
+               "Variable Name": "PosW",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "3"
+            },
+            {
+               "Variable Name": "VelW",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Array Size": "3"
+            },
+            {
+               "Variable Name": "Lng",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Description": "Geocentric"
+            },
+            {
+               "Variable Name": "Lat",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Description": "Geocentric"
+            },
+            {
+               "Variable Name": "Alt",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Description": "Geocentric"
+            }
          ]
       },
       {
          "Table Name": "AccelType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "TrueAcc",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Units": "m/s^2"
+            }
          ]
       },
       {

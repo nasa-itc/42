@@ -411,9 +411,11 @@ struct MagnetometerType {
    double Noise;
    long Node;
 
+   /*~ Outputs */
+   double Field; /* Magfield Component, [[Tesla]] [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   double Field; /* Magfield Component, Tesla */
 };
 
 struct CssType {
@@ -428,10 +430,12 @@ struct CssType {
    double Quant;
    long Node;
 
+   /*~ Outputs ~*/
+   long Valid; /* [~>~] */
+   double Illum; /* Units defined by scale [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   long Valid;
-   double Illum; /* Units defined by scale */
    double Albedo; /* [0.0:1.0] */
 };
 
@@ -449,10 +453,12 @@ struct FssType {
    long H_Axis; /* (BoreAxis+1)%3 */
    long V_Axis; /* (BoreAxis+2)%3 */
 
+   /*~ Outputs ~*/
+   long Valid; /* [~>~] */
+   double SunAng[2]; /* [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   long Valid;
-   double SunAng[2];
    double SunVecS[3];
    double SunVecB[3];
    double AlbA;
@@ -481,10 +487,12 @@ struct StarTrackerType {
    long H_Axis; /* (BoreAxis+1)%3 */
    long V_Axis; /* (BoreAxis+2)%3 */
 
+   /*~ Outputs ~*/
+   long Valid; /* [~>~] */
+   double qn[4]; /* [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   long Valid;
-   double qn[4];
 };
 
 struct GpsType {
@@ -496,17 +504,21 @@ struct GpsType {
    double TimeNoise;
    long Node;
    
+   /*~ Outputs ~*/
+   long Valid; /* [~>~] */
+   long Rollover; /* [~>~] */
+   long Week; /* [~>~] */
+   double Sec; /* [~>~] */
+   double PosN[3]; /* [~>~] */
+   double VelN[3]; /* [~>~] */
+   double PosW[3]; /* [~>~] */
+   double VelW[3]; /* [~>~] */
+   double Lng; /* Geocentric [~>~] */
+   double Lat; /* Geocentric [~>~] */
+   double Alt; /* Geocentric [~>~] */
+
    /*~ Internal Variables ~*/
    long SampleCounter;
-   long Valid;
-   long Rollover;
-   long Week;
-   double Sec;
-   double PosN[3];
-   double VelN[3];
-   double PosW[3];
-   double VelW[3];
-   double Lng,Lat,Alt; /* Geocentric */
    double WgsLng,WgsLat,WgsAlt; /* Geodetic, WGS-84 */
 };
 
@@ -523,13 +535,15 @@ struct AccelType {
    double SigU;/* Bias Stability m/s^1.5 */
    double SigE; /* DV Readout Noise, m/s  */
    
+   /*~ Outputs ~*/
+   double TrueAcc; /* [[m/s^2]] [~>~] */
+
    /*~ Internal Variables ~*/
    double AccumAccN[3];
    double Bias; /* m/s^2 */
    double PrevVelN[3]; /* m/s */
    double PrevQN[4];
    double DV; /* Change in velocity m/s */
-   double TrueAcc; /* m/s^2 */
    double MeasAcc; /* m/s^2 */
    double MaxAcc; /* m/s^2 max acceleration */
    double AccError;

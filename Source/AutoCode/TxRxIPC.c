@@ -182,6 +182,204 @@ void WriteToSocket(SOCKET Socket,  char **Prefix, long Nprefix, long EchoEnabled
                      if (EchoEnabled) printf("%s",line);
                   }
                }
+
+               for(k=0;k<S->Ncss;k++) {
+                  sprintf(line,"SC[%ld].CSS[%ld].Valid = %ld\n",Is,k,
+                     S->CSS[k].Valid);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ncss;k++) {
+                  sprintf(line,"SC[%ld].CSS[%ld].Illum = %18.12le\n",Is,k,
+                     S->CSS[k].Illum);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Nfss;k++) {
+                  sprintf(line,"SC[%ld].FSS[%ld].Valid = %ld\n",Is,k,
+                     S->FSS[k].Valid);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Nfss;k++) {
+                  sprintf(line,"SC[%ld].FSS[%ld].SunAng = [%18.12le %18.12le]\n",Is,k,
+                     S->FSS[k].SunAng[0],S->FSS[k].SunAng[1]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Nst;k++) {
+                  sprintf(line,"SC[%ld].ST[%ld].Valid = %ld\n",Is,k,
+                     S->ST[k].Valid);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Nst;k++) {
+                  sprintf(line,"SC[%ld].ST[%ld].qn = [%18.12le %18.12le %18.12le %18.12le]\n",Is,k,
+                     S->ST[k].qn[0],S->ST[k].qn[1],S->ST[k].qn[2],S->ST[k].qn[3]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Valid = %ld\n",Is,k,
+                     S->GPS[k].Valid);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Rollover = %ld\n",Is,k,
+                     S->GPS[k].Rollover);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Week = %ld\n",Is,k,
+                     S->GPS[k].Week);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Sec = %18.12le\n",Is,k,
+                     S->GPS[k].Sec);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].PosN = [%18.12le %18.12le %18.12le]\n",Is,k,
+                     S->GPS[k].PosN[0],S->GPS[k].PosN[1],S->GPS[k].PosN[2]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].VelN = [%18.12le %18.12le %18.12le]\n",Is,k,
+                     S->GPS[k].VelN[0],S->GPS[k].VelN[1],S->GPS[k].VelN[2]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].PosW = [%18.12le %18.12le %18.12le]\n",Is,k,
+                     S->GPS[k].PosW[0],S->GPS[k].PosW[1],S->GPS[k].PosW[2]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].VelW = [%18.12le %18.12le %18.12le]\n",Is,k,
+                     S->GPS[k].VelW[0],S->GPS[k].VelW[1],S->GPS[k].VelW[2]);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Lng = %18.12le\n",Is,k,
+                     S->GPS[k].Lng);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Lat = %18.12le\n",Is,k,
+                     S->GPS[k].Lat);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Ngps;k++) {
+                  sprintf(line,"SC[%ld].GPS[%ld].Alt = %18.12le\n",Is,k,
+                     S->GPS[k].Alt);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
+               for(k=0;k<S->Nacc;k++) {
+                  sprintf(line,"SC[%ld].Accel[%ld].TrueAcc = %18.12le\n",Is,k,
+                     S->Accel[k].TrueAcc);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
             }
          }
 
