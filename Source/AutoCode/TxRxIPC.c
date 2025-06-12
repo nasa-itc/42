@@ -183,6 +183,17 @@ void WriteToSocket(SOCKET Socket,  char **Prefix, long Nprefix, long EchoEnabled
                   }
                }
 
+               for(k=0;k<S->Nmag;k++) {
+                  sprintf(line,"SC[%ld].MAG[%ld].Field = %18.12le\n",Is,k,
+                     S->MAG[k].Field);
+                  if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                     LineLen = strlen(line);
+                     memcpy(&Msg[MsgLen],line,LineLen);
+                     MsgLen += LineLen;
+                     if (EchoEnabled) printf("%s",line);
+                  }
+               }
+
                for(k=0;k<S->Ncss;k++) {
                   sprintf(line,"SC[%ld].CSS[%ld].Valid = %ld\n",Is,k,
                      S->CSS[k].Valid);

@@ -411,7 +411,7 @@ struct MagnetometerType {
    double Noise;
    long Node;
 
-   /*~ Outputs */
+   /*~ Outputs ~*/
    double Field; /* Magfield Component, [[Tesla]] [~>~] */
 
    /*~ Internal Variables ~*/

@@ -8,6 +8,7 @@ long ScBTlmEnabled, MaxScBCtr;
 long ScGTlmEnabled, MaxScGCtr;
 long ScWhlTlmEnabled, MaxScWhlCtr;
 long ScGyroTlmEnabled, MaxScGyroCtr;
+long ScMAGTlmEnabled, MaxScMAGCtr;
 long ScCSSTlmEnabled, MaxScCSSCtr;
 long ScFSSTlmEnabled, MaxScFSSCtr;
 long ScSTTlmEnabled, MaxScSTCtr;
@@ -328,6 +329,53 @@ void WriteScGyroToCsv(void)
                fprintf(outfile[Isc],"%18.12le",SimTime);
                for(k=0;k<S->Ngyro;k++) {
                   fprintf(outfile[Isc],",%18.12le",S->Gyro[k].TrueRate);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+}
+/******************************************************************************/
+void WriteScMAGToCsv(void)
+{
+      static FILE **outfile;
+      struct SCType *S;
+      char FileName[80];
+      long Isc;
+      long k;
+      static long First = 1;
+      static long OutCtr = 1000000000;
+
+      if (First) {
+         First = 0;
+         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         for(Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               if (Nsc==1) sprintf(FileName,"ScMAG.csv");
+               else if (Nsc<=10) sprintf(FileName,"ScMAG%1ld.csv",Isc);
+               else sprintf(FileName,"ScMAG%02ld.csv",Isc);
+               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+
+               fprintf(outfile[Isc],"ScMAG_Time");
+               for(k=0;k<S->Nmag;k++) {
+                  fprintf(outfile[Isc],",Sc_MAG%ld_Field",k+1);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+      OutCtr++;
+      if (OutCtr > MaxScMAGCtr) {
+         OutCtr = 1;
+         for (Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               fprintf(outfile[Isc],"%18.12le",SimTime);
+               for(k=0;k<S->Nmag;k++) {
+                  fprintf(outfile[Isc],",%18.12le",S->MAG[k].Field);
                }
                fprintf(outfile[Isc],"\n");
             }
@@ -777,6 +825,14 @@ void WriteScVarsToCsv(void)
          else MaxScGyroCtr = (long) (dt/DTSIM+0.5);
 
          fscanf(infile,"%s %lf %[^\n] %[\n]",response,&dt,junk,&newline);
+         ScMAGTlmEnabled = DecodeString(response);
+         if (dt < DTSIM) {
+            printf("ScMAG timestep < DTSIM.  You'll want to fix that.");
+            exit(1);
+         }
+         else MaxScMAGCtr = (long) (dt/DTSIM+0.5);
+
+         fscanf(infile,"%s %lf %[^\n] %[\n]",response,&dt,junk,&newline);
          ScCSSTlmEnabled = DecodeString(response);
          if (dt < DTSIM) {
             printf("ScCSS timestep < DTSIM.  You'll want to fix that.");
@@ -831,6 +887,7 @@ void WriteScVarsToCsv(void)
       if (ScGTlmEnabled) WriteScGToCsv();
       if (ScWhlTlmEnabled) WriteScWhlToCsv();
       if (ScGyroTlmEnabled) WriteScGyroToCsv();
+      if (ScMAGTlmEnabled) WriteScMAGToCsv();
       if (ScCSSTlmEnabled) WriteScCSSToCsv();
       if (ScFSSTlmEnabled) WriteScFSSToCsv();
       if (ScSTTlmEnabled) WriteScSTToCsv();

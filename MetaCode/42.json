@@ -245,6 +245,14 @@
          "Table Name": "MagnetometerType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Field",
+               "I/O Role": "OUTPUT",
+               "IPC Role": "Tx",
+               "Data Type": "double",
+               "Units": "Tesla",
+               "Description": "Magfield Component,"
+            }
          ]
       },
       {
