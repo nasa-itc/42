@@ -675,11 +675,11 @@ void ReadFromSocket(SOCKET Socket, long EchoEnabled)
          SC[Is].RequestStateRefresh = 1;
       }
 
-      if (sscanf(line,"SC[%ld].Whl[%ld].H = %le",
+      if (sscanf(line,"SC[%ld].Whl[%ld].Tcmd = %le",
          &Is,&k,
          &DbleVal[0]) == 3)
       {
-         SC[Is].Whl[k].H = DbleVal[0];
+         SC[Is].Whl[k].Tcmd = DbleVal[0];
          SC[Is].RequestStateRefresh = 1;
       }
 

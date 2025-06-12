@@ -296,8 +296,11 @@ struct WhlHarmType {
 };
 
 struct WhlType {
+   /*~ Inputs ~*/
+   double Tcmd; /* [~<~] */
+
    /*~ Outputs ~*/
-   double H;  /* Angular Momentum, [[Nms]] [~=~] */
+   double H;  /* Angular Momentum, [[Nms]] [~>~] */
    
    /*~ Internal Variables ~*/
    long Body; /* Body that wheel is mounted in */
@@ -309,7 +312,6 @@ struct WhlType {
    double Vaxis[3]; /* Transverse axes */
    double Tmax;
    double Hmax;
-   double Tcmd;
    double Trq;  /* Exerted on wheel, expressed along wheel axis */
    long Node;
    struct DelayType *Delay; /* For injecting delay into control loops */

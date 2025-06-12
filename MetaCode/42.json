@@ -207,9 +207,15 @@
          "Table Type": "Structure",
          "Table Data": [
             {
+               "Variable Name": "Tcmd",
+               "I/O Role": "INPUT",
+               "IPC Role": "Rx",
+               "Data Type": "double"
+            },
+            {
                "Variable Name": "H",
                "I/O Role": "OUTPUT",
-               "IPC Role": "TxRx",
+               "IPC Role": "Tx",
                "Data Type": "double",
                "Units": "Nms",
                "Description": "Angular Momentum,"

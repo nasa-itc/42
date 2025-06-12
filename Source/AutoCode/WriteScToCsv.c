@@ -266,6 +266,9 @@ void WriteScWhlToCsv(void)
 
                fprintf(outfile[Isc],"ScWhl_Time");
                for(k=0;k<S->Nw;k++) {
+                  fprintf(outfile[Isc],",Sc_Whl%ld_Tcmd",k+1);
+               }
+               for(k=0;k<S->Nw;k++) {
                   fprintf(outfile[Isc],",Sc_Whl%ld_H",k+1);
                }
                fprintf(outfile[Isc],"\n");
@@ -280,6 +283,9 @@ void WriteScWhlToCsv(void)
             if (SC[Isc].Exists) {
                S = &SC[Isc];
                fprintf(outfile[Isc],"%18.12le",SimTime);
+               for(k=0;k<S->Nw;k++) {
+                  fprintf(outfile[Isc],",%18.12le",S->Whl[k].Tcmd);
+               }
                for(k=0;k<S->Nw;k++) {
                   fprintf(outfile[Isc],",%18.12le",S->Whl[k].H);
                }
