@@ -349,17 +349,22 @@ struct WhlType {
 };
 
 struct MTBType {
+   /*~ Inputs ~*/
+   double Mcmd; /* [~<~] */
+
    /*~ Internal Variables ~*/
    double M;
    double A[3]; /* Axis vector wrt Body 0 */
    double Mmax;
-   double Mcmd;
    double Trq[3]; /* Exerted on Body 0, expressed in B[0] frame */
    long Node;
    struct DelayType *Delay; /* For injecting delay into control loops */
 };
 
 struct ThrType {
+   /*~ Inputs ~*/
+   double ThrustLevelCmd; /* [{0.0:1.0}], for THR_PROPORTIONAL [~<~] */
+
    /*~ Internal Variables ~*/
    long Mode; /* THR_PULSED or THR_PROPORTIONAL */
    double Fmax;
@@ -368,7 +373,6 @@ struct ThrType {
    long Node;
    double A[3]; /* Axis vector wrt Body 0 */
    double PulseWidthCmd;  /* [[sec]], for THR_PULSED */
-   double ThrustLevelCmd; /* [{0.0:1.0}], for THR_PROPORTIONAL */
    double Frc[3]; /* Force exerted */
    double Trq[3]; /* Torque exerted */
    struct DelayType *Delay; /* For injecting delay into control loops */

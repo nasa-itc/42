@@ -226,12 +226,25 @@
          "Table Name": "MTBType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "Mcmd",
+               "I/O Role": "INPUT",
+               "IPC Role": "Rx",
+               "Data Type": "double"
+            }
          ]
       },
       {
          "Table Name": "ThrType",
          "Table Type": "Structure",
          "Table Data": [
+            {
+               "Variable Name": "ThrustLevelCmd",
+               "I/O Role": "INPUT",
+               "IPC Role": "Rx",
+               "Data Type": "double",
+               "Description": "[{0.0:1.0}], for THR_PROPORTIONAL"
+            }
          ]
       },
       {

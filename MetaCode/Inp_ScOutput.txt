@@ -3,6 +3,8 @@ TRUE  0.25   ! Sc Tlm Enabled, Interval
 FALSE  5.0   ! ScB Tlm Enabled, Interval
 FALSE  5.0   ! ScG Tlm Enabled, Interval
 FALSE  5.0   ! ScWhl Tlm Enabled, Interval
+FALSE  5.0   ! ScMTB Tlm Enabled, Interval
+FALSE  5.0   ! ScThr Tlm Enabled, Interval
 FALSE  5.0   ! ScGyro Tlm Enabled, Interval
 FALSE  5.0   ! ScMAG Tlm Enabled, Interval
 FALSE  5.0   ! ScCSS Tlm Enabled, Interval

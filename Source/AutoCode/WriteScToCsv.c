@@ -7,6 +7,8 @@ long ScTlmEnabled, MaxScCtr;
 long ScBTlmEnabled, MaxScBCtr;
 long ScGTlmEnabled, MaxScGCtr;
 long ScWhlTlmEnabled, MaxScWhlCtr;
+long ScMTBTlmEnabled, MaxScMTBCtr;
+long ScThrTlmEnabled, MaxScThrCtr;
 long ScGyroTlmEnabled, MaxScGyroCtr;
 long ScMAGTlmEnabled, MaxScMAGCtr;
 long ScCSSTlmEnabled, MaxScCSSCtr;
@@ -288,6 +290,100 @@ void WriteScWhlToCsv(void)
                }
                for(k=0;k<S->Nw;k++) {
                   fprintf(outfile[Isc],",%18.12le",S->Whl[k].H);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+}
+/******************************************************************************/
+void WriteScMTBToCsv(void)
+{
+      static FILE **outfile;
+      struct SCType *S;
+      char FileName[80];
+      long Isc;
+      long k;
+      static long First = 1;
+      static long OutCtr = 1000000000;
+
+      if (First) {
+         First = 0;
+         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         for(Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               if (Nsc==1) sprintf(FileName,"ScMTB.csv");
+               else if (Nsc<=10) sprintf(FileName,"ScMTB%1ld.csv",Isc);
+               else sprintf(FileName,"ScMTB%02ld.csv",Isc);
+               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+
+               fprintf(outfile[Isc],"ScMTB_Time");
+               for(k=0;k<S->Nmtb;k++) {
+                  fprintf(outfile[Isc],",Sc_MTB%ld_Mcmd",k+1);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+      OutCtr++;
+      if (OutCtr > MaxScMTBCtr) {
+         OutCtr = 1;
+         for (Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               fprintf(outfile[Isc],"%18.12le",SimTime);
+               for(k=0;k<S->Nmtb;k++) {
+                  fprintf(outfile[Isc],",%18.12le",S->MTB[k].Mcmd);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+}
+/******************************************************************************/
+void WriteScThrToCsv(void)
+{
+      static FILE **outfile;
+      struct SCType *S;
+      char FileName[80];
+      long Isc;
+      long k;
+      static long First = 1;
+      static long OutCtr = 1000000000;
+
+      if (First) {
+         First = 0;
+         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         for(Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               if (Nsc==1) sprintf(FileName,"ScThr.csv");
+               else if (Nsc<=10) sprintf(FileName,"ScThr%1ld.csv",Isc);
+               else sprintf(FileName,"ScThr%02ld.csv",Isc);
+               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+
+               fprintf(outfile[Isc],"ScThr_Time");
+               for(k=0;k<S->Nthr;k++) {
+                  fprintf(outfile[Isc],",Sc_Thr%ld_ThrustLevelCmd",k+1);
+               }
+               fprintf(outfile[Isc],"\n");
+            }
+         }
+      }
+
+      OutCtr++;
+      if (OutCtr > MaxScThrCtr) {
+         OutCtr = 1;
+         for (Isc=0;Isc<Nsc;Isc++) {
+            if (SC[Isc].Exists) {
+               S = &SC[Isc];
+               fprintf(outfile[Isc],"%18.12le",SimTime);
+               for(k=0;k<S->Nthr;k++) {
+                  fprintf(outfile[Isc],",%18.12le",S->Thr[k].ThrustLevelCmd);
                }
                fprintf(outfile[Isc],"\n");
             }
@@ -823,6 +919,22 @@ void WriteScVarsToCsv(void)
          else MaxScWhlCtr = (long) (dt/DTSIM+0.5);
 
          fscanf(infile,"%s %lf %[^\n] %[\n]",response,&dt,junk,&newline);
+         ScMTBTlmEnabled = DecodeString(response);
+         if (dt < DTSIM) {
+            printf("ScMTB timestep < DTSIM.  You'll want to fix that.");
+            exit(1);
+         }
+         else MaxScMTBCtr = (long) (dt/DTSIM+0.5);
+
+         fscanf(infile,"%s %lf %[^\n] %[\n]",response,&dt,junk,&newline);
+         ScThrTlmEnabled = DecodeString(response);
+         if (dt < DTSIM) {
+            printf("ScThr timestep < DTSIM.  You'll want to fix that.");
+            exit(1);
+         }
+         else MaxScThrCtr = (long) (dt/DTSIM+0.5);
+
+         fscanf(infile,"%s %lf %[^\n] %[\n]",response,&dt,junk,&newline);
          ScGyroTlmEnabled = DecodeString(response);
          if (dt < DTSIM) {
             printf("ScGyro timestep < DTSIM.  You'll want to fix that.");
@@ -892,6 +1004,8 @@ void WriteScVarsToCsv(void)
       if (ScBTlmEnabled) WriteScBToCsv();
       if (ScGTlmEnabled) WriteScGToCsv();
       if (ScWhlTlmEnabled) WriteScWhlToCsv();
+      if (ScMTBTlmEnabled) WriteScMTBToCsv();
+      if (ScThrTlmEnabled) WriteScThrToCsv();
       if (ScGyroTlmEnabled) WriteScGyroToCsv();
       if (ScMAGTlmEnabled) WriteScMAGToCsv();
       if (ScCSSTlmEnabled) WriteScCSSToCsv();
