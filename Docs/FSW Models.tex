@@ -10,7 +10,7 @@
 \begin{tabular}{@{} rl @{}}
     {\bf To:} & 42 Users\\ 
     {\bf From:} & Eric Stoneking \\ 
-    {\bf Date:} & July 2022 \\ 
+    {\bf Date:} & March 2025 \\ 
     {\bf Subject:} & Getting Started with 42 Flight Software Models\\ 
 \hline
 \end{tabular}
@@ -36,13 +36,13 @@ The source file {\tt 42fsw.c} is home to the model of the GNC flight software.  
 
 Passive FSW does nothing.  It exerts no forces or torques.  It is most useful for studying natural motion, passively-stabilized spacecraft, and out-of-control (eg. decommissioned) spacecraft.  In the {\tt Demo} folder, the Moai, Big Black Monolith, and the three cubesats are using the passive FSW.  BBM is demonstrating the natural motion due to an initial angular rate about the intermediate axis of inertia.
 
-\subsection{\tt PROTOTYPE\_FSW}
+\subsection{\tt INSTANT\_FSW}
 
-As its name implies, prototype FSW is most useful for quick starts and very early studies.  It uses inputs from the command script file (eg. {\tt Inp\_Cmd.txt}) to define a commanded attitude.  See {\tt Inp\_Cmd.txt} for command templates and examples.  The function {\tt PrototypeFSW} then controls the attitude to comply with the command.  In the {\tt Demo} folder, the Shuttle and Ion Cruiser are using the prototype FSW.  In the InOut folder, {\tt SC\_Simple.txt} is using prototype FSW.
+As its name implies, instant FSW is most useful for quick starts and very early studies.  It uses inputs from the command script file (eg. {\tt Inp\_Cmd.txt}) to define a commanded attitude.  See {\tt Inp\_Cmd.txt} for command templates and examples.  The function {\tt InstantFSW} then controls the attitude to comply with the command.  In the {\tt Demo} folder, the Shuttle and Ion Cruiser are using the instant FSW.  In the InOut folder, {\tt SC\_Simple.txt} is using instant FSW.
 
-\subsection{\tt AD\_HOC\_FSW}
+\subsection{\tt SANDBOX\_FSW}
 
-This model is intended as the best jumping-off point for customization.  As shipped, it is simply a proportional-derivative (PD) linear feedback to align the spacecraft with the inertial $N$ frame, using ideal torquers for actuation.  It is up to you to modify the sensor inputs, commanded attitude, control law, and actuator commanding to fit your situation.  In the {\tt Demo} folder, Voyager is running ad hoc FSW.
+This model is intended as the best jumping-off point for customization.  As shipped, it is simply a proportional-derivative (PD) linear feedback to align the spacecraft with the inertial $N$ frame, using ideal torquers for actuation.  It is up to you to modify the sensor inputs, commanded attitude, control law, and actuator commanding to fit your situation.  In the {\tt Demo} folder, Voyager is running sandbox FSW.
 
 \subsection{\tt THREE\_AXIS\_FSW}
 
@@ -64,13 +64,13 @@ The AC structure is defined in {\tt AcTypes.h}.  As shipped, it is populated wit
 
 \section{Sensor Models}
 
-In a simulation, sensors are one interface between the truth model (environment, dynamics) and the FSW model.  In general terms, a sensor model takes the truth, perhaps adds some noise or other errors, and repackages the result in the proper format for the FSW model.  In 42, the function {\tt 42sensors.c:Sensors} has some very simple sensor models provided.  For example, the IMU model simply copies the true angular rate of the spacecraft's main body into the FSW data structure.  It's up to you to embellish this model to reflect the realities of your sensor hardware to whatever fidelity you require.
+In a simulation, sensors are one interface between the truth model (environment, dynamics) and the FSW model.  In general terms, a sensor model takes the truth, perhaps adds some noise or other errors, and repackages the result in the proper format for the FSW model.  In 42, the function {\tt 42sensors.c:Sensors} has some very simple sensor models provided.  For example, the IMU model simply copies the true angular rate of the spacecraft's main body into the FSW data structure.  It's up to you to customize this model to reflect the realities of your sensor hardware to whatever fidelity you require.
 
 \section{Actuator Models}
 
-Actuators are the other interface between the truth model and the FSW model.  An actuator model accepts commands from the FSW model (eg. wheel torque commands, or thruster pulsewidth commands), and determines the forces and torques to apply to the spacecraft dynamical models.  Actuator models are called from {\tt 42actuators.c:Actuators}.  Like the sensor models, these models are very simple, and it's up to you to embellish them to reflect your hardware.
+Actuators are the other interface between the truth model and the FSW model.  An actuator model accepts commands from the FSW model (eg. wheel torque commands, or thruster pulsewidth commands), and determines the forces and torques to apply to the spacecraft dynamical models.  Actuator models are called from {\tt 42actuators.c:Actuators}.  Like the sensor models, these models are very simple, and it's up to you to customize them to reflect your hardware.
 
-One actuator type requires some explanation.  To enable rapid prototyping, 42 includes some ideal actuators, {\tt IdealFrc} and {\tt IdealTrq} as elements in the FSW structure.  These actuators have no hardware equivalent.  They give you the forces and torques you ask for, no questions asked.  This is very useful for early studies.  Suppose, for instance, that you want to study an orbital rendezvous and prox ops scenario.  You want to exert control forces to perform prox ops, but you don't want to have to figure out your thruster layout or write up your thruster selection logic.  {\tt IdealFrc} is the answer.  Prototype FSW and ad hoc FSW both use {\tt IdealTrq}.  As you add the hardware-based actuators into your control loop, you'll wean yourself off of the ideal actuators.
+One actuator type requires some explanation.  To enable rapid prototyping, 42 includes some ideal actuators, {\tt IdealFrc} and {\tt IdealTrq} as elements in the FSW structure.  These actuators have no hardware equivalent.  They give you the forces and torques you ask for, no questions asked.  This is very useful for early studies.  Suppose, for instance, that you want to study an orbital rendezvous and prox ops scenario.  You want to exert control forces to perform prox ops, but you don't want to have to figure out your thruster layout or write up your thruster selection logic.  {\tt IdealFrc} is the answer.  Instant FSW and sandbox FSW both use {\tt IdealTrq}.  As you add the hardware-based actuators into your control loop, you'll wean yourself off of the ideal actuators.
 
 \end{document}
 
