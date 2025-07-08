@@ -74,11 +74,48 @@ int FileToString(const char *file_name, char **result_string,
           printf("Error reading from file %s\n", file_name);
           return -1;
       }
+      if (ret > file_len) {
+         printf("Error: Number of characters read (%d) exceeds expected file size (%d) for file %s\n",
+                 ret,(int) file_len,file_name);
+         return -1;
+      }
+      (*result_string)[ret]  = '\0';
 
       close(fd);
 
       *string_len = file_len;
       return 0;
+}
+/**********************************************************************/
+double *PpmToPsf(const char *path, const char *filename, 
+   long *width, long *height, long *BytesPerPixel)
+{
+      FILE *infile;
+      long N,i;
+      long Nh,Nw,Nb,junk;
+      char format[20],comment[80];
+      double *PSF;
+
+      infile = FileOpen(path,filename,"rb");
+      fscanf(infile,"%s\n%[^\n]\n",format,comment);
+      if (!strcmp(format,"P6")) Nb = 3;
+      else if (!strcmp(format,"P5")) Nb = 1;
+      else {
+         printf("Unknown format in PpmToImage.\n");
+         exit(1);
+      }
+      fscanf(infile,"%ld %ld\n%ld\n",&Nw,&Nh,&junk);
+      N = Nw*Nh*Nb;
+      PSF = (double *) calloc(N,sizeof(double));
+      for(i=0;i<N;i++) {
+         PSF[i] = ((double) fgetc(infile))/255.0;
+      }
+      fclose(infile);
+      *width = Nw;
+      *height = Nh;
+      *BytesPerPixel = Nb;
+      
+      return(PSF);
 }
 /**********************************************************************/
 SOCKET InitSocketServer(int Port, int AllowBlocking)
@@ -217,7 +254,7 @@ SOCKET InitSocketClient(const char *hostname, int Port,int AllowBlocking)
       }
       memset((char *) &Server,0,sizeof(Server));
       Server.sin_family = AF_INET;
-      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr,
+      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr_list[0],
          Host->h_length);
       Server.sin_port = htons(Port);
       printf("Client connecting to Server on Port %i\n",Port);
@@ -254,7 +291,7 @@ SOCKET InitSocketClient(const char *hostname, int Port,int AllowBlocking)
       }
       memset((char *) &Server,0,sizeof(Server));
       Server.sin_family = AF_INET;
-      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr,
+      memcpy((char *)&Server.sin_addr.s_addr,(char *)Host->h_addr_list[0],
          Host->h_length);
       Server.sin_port = htons(Port);
       printf("Client connecting to Server on Port %i\n",Port);

@@ -234,8 +234,8 @@
 
 /* FSW Tags */
 #define PASSIVE_FSW 0
-#define PROTOTYPE_FSW 1
-#define AD_HOC_FSW 2
+#define INSTANT_FSW 1
+#define SANDBOX_FSW 2
 #define SPINNER_FSW 3
 #define MOMBIAS_FSW 4
 #define THREE_AXIS_FSW 5
@@ -243,7 +243,7 @@
 #define CMG_FSW 7
 #define THR_FSW 8
 #define CFS_FSW 9
-#define RBT_FSW 10
+#define ROVER_FSW 10
 
 /* Command Types */
 #define CMD_DIRECTION 0
@@ -269,11 +269,10 @@
 #define IPC_TX 1
 #define IPC_RX 2
 #define IPC_TXRX 3
-#define IPC_ACS 4
-#define IPC_WRITEFILE 5
-#define IPC_READFILE 6
-#define IPC_SPIRENT 7
-#define IPC_FFTB 8
+#define IPC_WRITEFILE 4
+#define IPC_READFILE 5
+#define IPC_SPIRENT 6
+#define IPC_FFTB 7
 
 /* Socket Roles for InterProcess Comm */
 #define IPC_SERVER 0
@@ -308,5 +307,14 @@
 /* Thruster Command Modes */
 #define THR_PULSED 0
 #define THR_PROPORTIONAL 1
+
+/* Optics */
+#define OPT_APERTURE 0
+#define OPT_PLANAR 1
+#define OPT_CONIC 2
+#define OPT_THINLENS 3
+#define OPT_DETECTOR 4
+#define OPT_CONCAVE (1.0)
+#define OPT_CONVEX (-1.0)
 
 #endif /* __42DEFINES_H__ */
