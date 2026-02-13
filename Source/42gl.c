@@ -4516,6 +4516,7 @@ void InitSphereWidgets(void)
 
       SphereShowWidget.Spot[0].Selected = 1;
       SphereShowWidget.Spot[1].Selected = 1;
+      SphereShowWidget.Spot[2].Selected = 1;
 
       for (i=0; i<SphereShowWidget.Nspot; i++) {
 
@@ -4548,6 +4549,8 @@ void InitSphereWidgets(void)
       }
 
       VectorsWidget.Spot[0].Selected = 1;
+      VectorsWidget.Spot[1].Selected = 1;
+      VectorsWidget.Spot[2].Selected = 1;
 
       for (i=0; i<VectorsWidget.Nspot; i++) {
 
@@ -4581,6 +4584,7 @@ void InitSphereWidgets(void)
       
       FOVsWidget.Spot[0].Selected = 1;
       FOVsWidget.Spot[1].Selected = 1;
+      FOVsWidget.Spot[2].Selected = 1;
       
       for (i=0; i<FOVsWidget.Nspot; i++) {
 
@@ -4644,6 +4648,7 @@ void InitSphereWidgets(void)
       }
 
       AxesWidget.Spot[0].Selected = 1;
+      AxesWidget.Spot[1].Selected = 1;
       AxesWidget.Spot[2].Selected = 1;
 
       for (i=0; i<3; i++) {
