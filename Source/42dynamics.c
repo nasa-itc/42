@@ -3323,7 +3323,7 @@ void OrderNMultiBodyEOM(struct SCType *S)
       }
       
       /* Wheel EOM */
-     for(Iw=0;Iw<S->Nw;Iw++) {
+      for(Iw=0;Iw<S->Nw;Iw++) {
          W = &S->Whl[Iw];
          W->Hdot = W->Trq;
       }

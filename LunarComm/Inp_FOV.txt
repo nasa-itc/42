@@ -1,16 +1,16 @@
 ************************* Fields of View ***************************
 1                                 !  Number of FOVs
 --------------------------------------------------------------------
-"LIDAR"                           !  Label
-12   4.0                           !  Number of Sides, Length [m]
-8.0  4.0                          !  H Width, V Height [deg]
-0.0 0.7 0.5 0.5                   !  Color RGB+Alpha
+" "                             !  Label
+24   4.0                          !  Number of Sides, Length [m]
+0.2 0.2                           !  H Width, V Height [deg]
+0.0 1.0 0.0 0.5                   !  Color RGB+Alpha
 SOLID                             !  WIREFRAME, SOLID, VECTOR, or PLANE 
-TRUE  FALSE                       !  Draw Near Field, Draw Far Field
-0  0                              !  SC, Body 
-0.5  0.0  0.25                     !  Position in Body [m]
-30.0  0.0  0.0  231                !  Euler Angles [deg], Sequence
-X_AXIS                            !  Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+TRUE  TRUE                        !  Draw Near Field, Draw Far Field
+0  1                              !  SC, Body 
+0.0  0.0  0.0                     !  Position in Body [m]
+0.0  0.0  0.0  321                !  Euler Angles [deg], Sequence
+Z_AXIS                            !  Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
 --------------------------------------------------------------------
 "WIRE"                            !  Label
 24   4.0                          !  Number of Sides, Length [m]

@@ -38,7 +38,7 @@ NONE                        ! Node File Name
 NONE                          ! Flex File Name
 ================================ CMG 0 ================================
 10.0                          ! Mass
-20.0  10.0  0.12              ! Moments of Inertia (kg-m^2)
+10.0  10.0  10.0              ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0 75.0                 ! Constant Embedded Momentum (Nms)
@@ -48,7 +48,7 @@ NONE                        ! Node File Name
 NONE                          ! Flex File Name
 ================================ CMG 1 ================================
 10.0                          ! Mass
-20.0  10.0  0.12              ! Moments of Inertia (kg-m^2)
+10.0  10.0  10.0              ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0 75.0                 ! Constant Embedded Momentum (Nms)
@@ -58,7 +58,7 @@ NONE                        ! Node File Name
 NONE                          ! Flex File Name
 ================================ CMG 2 ================================
 10.0                          ! Mass
-20.0  10.0  0.12              ! Moments of Inertia (kg-m^2)
+10.0  10.0  10.0              ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0 75.0                 ! Constant Embedded Momentum (Nms)
@@ -68,7 +68,7 @@ NONE                        ! Node File Name
 NONE                          ! Flex File Name
 ================================ CMG 3 ================================
 10.0                          ! Mass
-20.0  10.0  0.12              ! Moments of Inertia (kg-m^2)
+10.0  10.0  10.0              ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0 75.0                 ! Constant Embedded Momentum (Nms)

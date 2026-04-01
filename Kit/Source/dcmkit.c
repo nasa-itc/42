@@ -642,6 +642,32 @@ void PrincipalMOI(double Ib[3][3], double Ip[3], double CPB[3][3])
       }
 }
 /**********************************************************************/
+/* Physically-realizable inertias must meet these constraints         */
+long InertiasArePhysical(double Ib[3][3])
+{
+      long OK = 1;
+      
+      /* Moments of inertia must be positive */
+      if (Ib[0][0] <= 0.0) OK = 0;
+      if (Ib[1][1] <= 0.0) OK = 0;
+      if (Ib[2][2] <= 0.0) OK = 0;
+      
+      /* Triangle inequalities */
+      if (Ib[0][0]+Ib[1][1] < Ib[2][2]) OK = 0;
+      if (Ib[1][1]+Ib[2][2] < Ib[0][0]) OK = 0;
+      if (Ib[2][2]+Ib[0][0] < Ib[1][1]) OK = 0;
+      
+      /* MOI-POI constraints */
+      if (Ib[0][0] < 2.0*fabs(Ib[1][2])) OK = 0;
+      if (Ib[1][1] < 2.0*fabs(Ib[2][0])) OK = 0;
+      if (Ib[2][2] < 2.0*fabs(Ib[0][1])) OK = 0;
+      if (Ib[0][0]*Ib[1][1] < Ib[0][1]*Ib[0][1]) OK = 0;
+      if (Ib[1][1]*Ib[2][2] < Ib[1][2]*Ib[1][2]) OK = 0;
+      if (Ib[2][2]*Ib[0][0] < Ib[2][0]*Ib[2][0]) OK = 0;
+      
+      return(OK);
+}
+/**********************************************************************/
 /*  Given quaternion measurements, find body rates.  Ref Kane, 1.13   */
 void Q2W(double q[4], double qdot[4], double w[3])
 {

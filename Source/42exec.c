@@ -78,6 +78,7 @@ long AdvanceTime(void)
       static long PrevTick = 0;
       static long CurrTick = 1;
       long Done;
+      struct timespec SleepDuration;
 
       /* Advance time to next Timestep */
       switch (TimeMode) {
@@ -105,7 +106,15 @@ long AdvanceTime(void)
 
             break;
          case REAL_TIME :
-            usleep(1.0E6*DTSIM);
+            if (DTSIM < 1.0) {
+               SleepDuration.tv_sec = (time_t) 0.0;
+               SleepDuration.tv_nsec = (long) (1.0E9*DTSIM);
+            }
+            else {
+               SleepDuration.tv_sec = (time_t) floor(DTSIM);
+               SleepDuration.tv_nsec = (long) (1.0E9*(DTSIM-floor(DTSIM)));
+            }
+            nanosleep(&SleepDuration,NULL);
             SimTime += DTSIM;
             itime = (long) ((SimTime+0.5*DTSIM)/(DTSIM));
             SimTime = ((double) itime)*DTSIM;
@@ -335,6 +344,7 @@ long SimStep(void)
                PartitionForces(S); /* Orbit-affecting and "internal" */
             }
          }
+         CommLinkPerformance();
          Report();  /* File Output */
       }
 
@@ -368,6 +378,7 @@ long SimStep(void)
             PartitionForces(S); /* Orbit-affecting and "internal" */
          }
       }
+      CommLinkPerformance();
       Report();  /* File Output */
 
       /* Exit when Stoptime is reached */

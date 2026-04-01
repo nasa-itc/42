@@ -838,7 +838,7 @@ void HiFiEarthPrecNute(double JD,double C_TEME_TETE[3][3],
 void WGS84ToECEF(double glat, double glong, double alt, double p[3])
 {
       double a = 6378137.0;
-      double f = 1.0/298.257222101;
+      double f = 1.0/298.2572235631;
       double e2 = f*(2.0-f);
       double X;
       double CosLat,SinLat,CosLng,SinLng;
@@ -858,7 +858,7 @@ void WGS84ToECEF(double glat, double glong, double alt, double p[3])
 void ECEFToWGS84(double p[3], double *glat, double *glong, double *alt)
 {
       double a = 6378137.0;
-      double f = 1.0/298.257222101;
+      double f = 1.0/298.2572235631;
       double b = a*(1.0-f);
       double e2 = f*(2.0-f);
       double ep2 = f*(2.0-f)/(1.0-f)/(1.0-f);

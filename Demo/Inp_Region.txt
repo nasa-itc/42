@@ -2,6 +2,15 @@
 1                            !  Number of Regions
 ---------------------------------------------------------
 TRUE                         ! Exists
+"Crater"                     ! Name
+LUNA                         ! World
+LLA                          ! POSW or LLA
+0.0   0.0  0.0               ! Position in W, m
+210.0  60.0  0.0              ! Lng, Lat (deg), Alt (m)
+1.0E6  1.0E4  0.8            ! Elasticity, Damping, Friction Coef
+Rgn_MoonCrater.obj           ! Geometry File Name
+---------------------------------------------------------
+TRUE                         ! Exists
 "TAG"                        ! Name
 MINORBODY_2                  ! World
 POSW                         ! POSW or LLA

@@ -6,6 +6,6 @@ a.out
 *.webarchive
 *.42
 *.csv
-*.ipynb
 42
+42.exe
 *.ipynb_checkpoints

@@ -21,7 +21,8 @@
 #define ON 1
 #define OFF 0
 
-#define AU2m 149597870000.0
+#define AU2m (149597870000.0)
+#define SPEED_OF_LIGHT (299792458.0)
 
 #define ABS(X) ((X)>0 ? (X) : (-X))
 #define MIN(X,Y) ((X)<(Y) ? (X) : (Y))
@@ -243,7 +244,8 @@
 #define CMG_FSW 7
 #define THR_FSW 8
 #define CFS_FSW 9
-#define ROVER_FSW 10
+#define HEXAPOD_FSW 10
+#define LUNARCOMM_FSW 11
 
 /* Command Types */
 #define CMD_DIRECTION 0
@@ -316,5 +318,10 @@
 #define OPT_DETECTOR 4
 #define OPT_CONCAVE (1.0)
 #define OPT_CONVEX (-1.0)
+
+/* Comm Links */
+#define UPLINK 0
+#define DOWNLINK 1
+#define CROSSLINK 2
 
 #endif /* __42DEFINES_H__ */

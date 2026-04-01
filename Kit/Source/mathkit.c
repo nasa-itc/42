@@ -1466,10 +1466,12 @@ double LinInterp(double *X, double *Y, double x, long n)
 /*  A constant-rate interpolation for quaternions                     */
 /*  Ref: Ken Shoemake, "Animating Rotation with Quaternion Curves"    */
 /*  q(u=0.0) = q1, q(u=1.0) = q2                                      */
+/*  The Theta appearing here is the half-angle of the full rotation   */
 void SphereInterp(double q1[4], double q2[4], double u, double q[4])
 {
       double Theta,CosTheta,SinTheta;
       double SinU,Sin1mU;
+      double sgn;
       long k;
 
       CosTheta = q1[0]*q2[0]+q1[1]*q2[1]+q1[2]*q2[2]+q1[3]*q2[3];
@@ -1477,11 +1479,12 @@ void SphereInterp(double q1[4], double q2[4], double u, double q[4])
          for(k=0;k<4;k++) q[k] = q1[k];
       }
       else {
+         sgn = signum(CosTheta);
          SinTheta = sqrt(1.0-CosTheta*CosTheta);
          Theta = asin(SinTheta);
          SinU = sin(u*Theta);
          Sin1mU = sin((1.0-u)*Theta);
-         for(k=0;k<4;k++) q[k] = (SinU*q2[k] + Sin1mU*q1[k])/SinTheta;
+         for(k=0;k<4;k++) q[k] = (SinU*q2[k] + sgn*Sin1mU*q1[k])/SinTheta;
       }
 }
 /**********************************************************************/

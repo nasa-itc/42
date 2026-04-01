@@ -1,5 +1,5 @@
 <<<<<<<<<<<<<<<<<<<<<<  Minor Body Inputs for 42  >>>>>>>>>>>>>>>>>>>>>>>>>>
-8                                  ! Number of Minor Bodies in this File
+9                                  ! Number of Minor Bodies in this File
 *****************************  Minor Body 0 *********************************
 TRUE                               ! Exists
 "Bennu"                            ! Name
@@ -151,4 +151,23 @@ HedwigBump.ppm                     ! Bump Texture File Name
 4.9996                             ! RAAN, rad
 0.0025304                          ! Arg of Periapsis, rad
 2013  4  3  21                     ! Epoch Year, Month, Day, Hour
+0.0                                ! True Anomaly at Epoch, rad
+*****************************  Minor Body 8 *********************************
+TRUE                               ! Exists
+"Zero"                             ! Name 
+ASTEROID                           ! ASTEROID or COMET
+NONE                               ! Map File Name
+NONE                               ! Geometry Object File Name 
+NONE                               ! Color Texture File Name
+NONE                               ! Bump Texture File Name
+0.0                                ! mu, m^2/sec^3
+0.1                                ! Radius, m
+0.0                                ! Rotation rate, rad/sec
+0.0   90.0                         ! RA, Dec of pole, deg
+150.0E9                            ! SMA, m
+0.0                                ! Eccentricity
+0.0                                ! Inclination, rad
+0.0                                ! RAAN, rad
+0.0                                ! Arg of Periapsis, rad
+2013  4  3  1                      ! Epoch Year, Month, Day, Hour
 0.0                                ! True Anomaly at Epoch, rad

@@ -5,34 +5,72 @@ name: C/C++ CI
 # using up runner minutes
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main, dev ]
 
 jobs:
-  build-ubuntu:
+# amd64 section, using ubuntu-latest
+  build-ubuntu-amd64:
     # default Ubuntu build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: apt-get update
+      run: sudo apt-get update
     - name: install dep
       run: sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev libglfw3-dev
     - name: make
       run: make
       
-  build-ubuntu-glut:
+  build-ubuntu-amd64-glut:
     # Ubuntu build with GLUT graphics
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: apt-get update
+      run: sudo apt-get update
     - name: install dep
       run: sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev libglfw3-dev
     - name: make
       run: make GLUT_OR_GLFW=_USE_GLUT_
       
-  build-ubuntu-no-graphics:
+  build-ubuntu-amd64-no-graphics:
     # Ubuntu build with all graphics disabled
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: make
+      run: make GUIFLAG=
+
+# arm64 section using ubuntu-24.04-arm
+  build-ubuntu-arm64:
+    # default Ubuntu build
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v2
+    - name: apt-get update
+      run: sudo apt-get update
+    - name: install dep
+      run: sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev libglfw3-dev
+    - name: make
+      run: make
+
+  build-ubuntu-arm64-glut:
+    # Ubuntu build with GLUT graphics
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v2
+    - name: apt-get update
+      run: sudo apt-get update
+    - name: install dep
+      run: sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev libglfw3-dev
+    - name: make
+      run: make GLUT_OR_GLFW=_USE_GLUT_
+      
+  build-ubuntu-arm64-no-graphics:
+    # Ubuntu build with all graphics disabled
+    runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v2
     - name: make

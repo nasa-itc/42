@@ -1,0 +1,5 @@
+<<<<<<<<<<<<<<<<  Body Node Inputs for 42  >>>>>>>>>>>>>>>>>>>>>
+Simple Nodes                    ! Description
+1                               ! Number of Nodes
+******************* Node Location, Comment *********************
+0.0  0.0  0.0        "Accel"

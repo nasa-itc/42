@@ -1,13 +1,13 @@
 <<<<<<<<<<<<<<<<<  42: Spacecraft Description File   >>>>>>>>>>>>>>>>>
-Rover                       !  Description
-"Rvr "                      !  Label
+Hexapod Rover               !  Description
+"Hex "                      !  Label
 GenScSpriteAlpha.ppm        !  Sprite File Name
-ROVER_FSW                   !  Flight Software Identifier
+HEXAPOD_FSW                 !  Flight Software Identifier
 0.2                         !  FSW Sample Time, sec
 ************************* Orbit Parameters ****************************
 COWELL                      !  Orbit Prop FIXED, EULER_HILL, ENCKE, or COWELL
 CM                          !  Pos of CM or ORIGIN, wrt F
--5.0  5.0  2.0               !  Pos wrt Formation (m), expressed in F
+-5.0  5.0  2.0              !  Pos wrt Formation (m), expressed in F
 0.0  0.0  0.0               !  Vel wrt Formation (m/s), expressed in F
 *************************** Initial Attitude ***************************
 LAL                         ! Ang Vel wrt [NL], Att [QA] wrt [NLF]

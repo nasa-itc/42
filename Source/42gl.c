@@ -33,6 +33,7 @@ void DrawWorldAsBackdrop(struct WorldType *W,double PosN[3],double svn[3])
       double CWE[3][3],PosW[3];
       GLfloat LightPos[4] = {0.0,0.0,0.0,0.0};
       GLfloat CWEarray[9];
+      double SunDist,RadRatio,CosSunAng;
       long i,j;
 
       A = &W->Atmo;
@@ -65,6 +66,10 @@ void DrawWorldAsBackdrop(struct WorldType *W,double PosN[3],double svn[3])
       }
       else CosRingAng = -1.0;
 
+      SunDist = MAGV(POV.PosH);
+      RadRatio = World[0].rad/SunDist;
+      CosSunAng = sqrt(1.0-RadRatio*RadRatio);
+
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_CUBE_MAP,W->ColCubeTag);
       glActiveTexture(GL_TEXTURE1);
@@ -79,6 +84,12 @@ void DrawWorldAsBackdrop(struct WorldType *W,double PosN[3],double svn[3])
       UniLoc = glGetUniformLocation(WorldShaderProgram,"HasAtmo");
       glUniform1i(UniLoc,A->Exists);
 
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"GasColor");
+      glUniform3f(UniLoc,A->GasColor[0],A->GasColor[1],A->GasColor[2]);
+
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"DustColor");
+      glUniform3f(UniLoc,A->DustColor[0],A->DustColor[1],A->DustColor[2]);
+
       UniLoc = glGetUniformLocation(WorldShaderProgram,"Br");
       glUniform3f(UniLoc,A->RayScat[0],A->RayScat[1],A->RayScat[2]);
 
@@ -91,9 +102,6 @@ void DrawWorldAsBackdrop(struct WorldType *W,double PosN[3],double svn[3])
       UniLoc = glGetUniformLocation(WorldShaderProgram,"Hm");
       glUniform1f(UniLoc,A->MieScaleHt);
 
-      UniLoc = glGetUniformLocation(WorldShaderProgram,"Gm");
-      glUniform1f(UniLoc,A->MieG);
-
       UniLoc = glGetUniformLocation(WorldShaderProgram,"UnitWorldVecE");
       glUniform3f(UniLoc,UnitWorldVecE[0],UnitWorldVecE[1],UnitWorldVecE[2]);
 
@@ -103,11 +111,17 @@ void DrawWorldAsBackdrop(struct WorldType *W,double PosN[3],double svn[3])
       UniLoc = glGetUniformLocation(WorldShaderProgram,"CosAtmoAng");
       glUniform1f(UniLoc,CosAtmoAng);
 
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"CosSunAng");
+      glUniform1f(UniLoc,CosSunAng);
+
       UniLoc = glGetUniformLocation(WorldShaderProgram,"CosRingAng");
       glUniform1f(UniLoc,CosRingAng);
 
       UniLoc = glGetUniformLocation(WorldShaderProgram,"WorldRad");
       glUniform1f(UniLoc,W->rad);
+
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"AtmoRad");
+      glUniform1f(UniLoc,A->rad);
 
       UniLoc = glGetUniformLocation(WorldShaderProgram,"PosEyeW");
       glUniform3f(UniLoc,PosW[0],PosW[1],PosW[2]);
@@ -1881,6 +1895,7 @@ void OpaquePass(void)
       struct ShadowFBOType *SM;
       long Ir;
       double PosR[3];
+      float Black[4] = {0.0,0.0,0.0,1.0};
 
       SM = &ShadowMap;
 
@@ -1901,7 +1916,7 @@ void OpaquePass(void)
          if (R->Exists && R->World == POV.Host.World) {
             glPushMatrix();
             glMultMatrixf(R->ModelMatrix);
-            DrawCmdPath();
+            /* DrawCmdPath(); */
             if (ShadowsEnabled) {
                MxM4f(ShadowFromNMatrix,R->ModelMatrix,ShadowMatrix);
                glUniformMatrix4fv(ShadowMatrixLoc,1,0,ShadowMatrix);
@@ -1913,6 +1928,14 @@ void OpaquePass(void)
 
       for(Isc=0;Isc<Nsc;Isc++) {
          S = &SC[Isc];
+         if (S->Eclipse) {
+            glLightfv(GL_LIGHT0,GL_DIFFUSE,Black);
+            glLightfv(GL_LIGHT0,GL_SPECULAR,Black);
+         }
+         else {
+            glLightfv(GL_LIGHT0,GL_DIFFUSE,LocalDiffuseLightColor);
+            glLightfv(GL_LIGHT0,GL_SPECULAR,SpecularLightColor);
+         }
          if (ScIsVisible(POV.Host.RefOrb,Isc,PosR)) {
             for(Ib=0;Ib<S->Nb;Ib++) {
                B = &S->B[Ib];
@@ -5183,13 +5206,33 @@ void LoadCamShaders(void)
       glUniform1i(UniLoc,3);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"HasAtmo");
       glUniform1i(UniLoc,0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"HasRing");
+      glUniform1i(UniLoc,0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"GasColor");
+      glUniform3f(UniLoc,0.0,0.0,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"DustColor");
+      glUniform3f(UniLoc,0.0,0.0,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"Br");
+      glUniform3f(UniLoc,0.0,0.0,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"Bm");
+      glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"Hr");
+      glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"Hm");
+      glUniform1f(UniLoc,0.0);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"UnitWorldVecE");
       glUniform3f(UniLoc,0.0,0.0,1.0);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"CosWorldAng");
       glUniform1f(UniLoc,0.0);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"CosAtmoAng");
       glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"CosSunAng");
+      glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"CosRingAng");
+      glUniform1f(UniLoc,0.0);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"WorldRad");
+      glUniform1f(UniLoc,0.0);
+      UniLoc = glGetUniformLocation(WorldShaderProgram,"AtmoRad");
       glUniform1f(UniLoc,0.0);
       UniLoc = glGetUniformLocation(WorldShaderProgram,"PosEyeW");
       glUniform3f(UniLoc,0.0,0.0,0.0);
@@ -5495,22 +5538,22 @@ void InitColors(void)
       long i;
 
 
-      DistantDiffuseLightColor[0] = 0.95;
-      DistantDiffuseLightColor[1] = 0.95;
-      DistantDiffuseLightColor[2] = 0.95;
+      DistantDiffuseLightColor[0] = 1.0;
+      DistantDiffuseLightColor[1] = 1.0;
+      DistantDiffuseLightColor[2] = 1.0;
       DistantDiffuseLightColor[3] = 1.0;
 
       for(i=0;i<3;i++)
-         DistantAmbientLightColor[i] = 1.0-DistantDiffuseLightColor[i];
+         DistantAmbientLightColor[i] = 1.0-0.5*DistantDiffuseLightColor[i];
       DistantAmbientLightColor[3] = 1.0;
 
-      LocalDiffuseLightColor[0] = 0.5;
-      LocalDiffuseLightColor[1] = 0.5;
-      LocalDiffuseLightColor[2] = 0.5;
+      LocalDiffuseLightColor[0] = 0.75;
+      LocalDiffuseLightColor[1] = 0.75;
+      LocalDiffuseLightColor[2] = 0.75;
       LocalDiffuseLightColor[3] = 1.0;
 
       for(i=0;i<3;i++)
-         LocalAmbientLightColor[i] = 1.0-LocalDiffuseLightColor[i];
+         LocalAmbientLightColor[i] = 1.0-0.5*LocalDiffuseLightColor[i];
       LocalAmbientLightColor[3] = 1.0;
 
       SpecularLightColor[0] = 1.0;

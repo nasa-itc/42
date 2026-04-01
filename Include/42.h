@@ -36,7 +36,7 @@
 #include "sphkit.h"
 #include "timekit.h"
 #include "fswkit.h"
-#include "msis86kit.h"
+//#include "msis86kit.h"
 
 /*
 ** #ifdef __cplusplus
@@ -164,6 +164,9 @@ EXTERN double AssembleTime,LockTime,TriangleTime,SubstTime,SolveTime;
 
 EXTERN struct ConstellationType Constell[89];
 
+/* Comm Link */
+EXTERN long Nlink;
+EXTERN struct CommLinkType *CommLink;
 
 long SimStep(void);
 void Ephemerides(void);
@@ -208,6 +211,7 @@ long OpticalFieldPoint(double StarVecB[3], struct OpticsType *O,
 long OpticalTrain(long FldSC, long FldBody, double FldPntB[3], double FldDirB[3], 
    long Nopt, struct OpticsType *Opt,
    long *OutSC, long *OutBody, double OutPntB[3], double OutDirB[3]);
+void CommLinkPerformance(void);
 
 /* Debug Function Prototypes */
 void EchoPVel(struct SCType *S);

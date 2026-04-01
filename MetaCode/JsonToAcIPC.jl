@@ -403,7 +403,7 @@ function BuildScBufLenWriteString()
       F *= "      int MsgLen = 0;\n";
       F *= "      int Success;\n";
       F *= "\n";
-      F *= "      Msg = (char *) calloc($N,sizeof(long));\n";
+      F *= "      Msg = (char *) calloc($N+1,sizeof(long));\n";
       F *= "\n";
       for i=1:N
          F *= "      NumBytes = sizeof(long);\n";

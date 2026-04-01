@@ -206,6 +206,79 @@ void ReportEpoch(void)
       fclose(outfile);
 }
 /*********************************************************************/
+void WriteCommLinkToCsv(void)
+{
+      static long First = 1;
+      long Il;
+      static FILE **outfile;
+      struct CommLinkType *L;
+      char FileName[80];
+      
+      if (Nlink > 0) {
+         if (First) {
+            First = 0;
+            outfile = (FILE**) calloc(Nlink,sizeof(FILE*));
+            for(Il=0;Il<Nlink;Il++) {
+               L = &CommLink[Il];
+               if (L->OutEnabled) {
+                  if (Nlink==1) sprintf(FileName,"Link.csv");
+                  else if (Nlink<=10) sprintf(FileName,"Link%1ld.csv",Il);
+                  else sprintf(FileName,"Link%02ld.csv",Il);
+                  outfile[Il] = FileOpen(InOutPath,FileName,"w");
+
+                  L->OutCtr = 1000000000;
+                  fprintf(outfile[Il],"Time");
+                  fprintf(outfile[Il],",Doppler");
+                  fprintf(outfile[Il],",Loss");
+                  fprintf(outfile[Il],",Delay");
+                  fprintf(outfile[Il],",Carrier");
+                  fprintf(outfile[Il],",Noise");
+                  fprintf(outfile[Il],",CNR");
+                  fprintf(outfile[Il],",EIRP");
+                  fprintf(outfile[Il],",FSPL");
+                  fprintf(outfile[Il],",PwrFluxDens");
+                  fprintf(outfile[Il],",Range");
+                  fprintf(outfile[Il],",RangeRate");
+                  fprintf(outfile[Il],",TxAntGain");
+                  fprintf(outfile[Il],",RxAntGain");
+                  fprintf(outfile[Il],",TxOcculted");
+                  fprintf(outfile[Il],",RxOcculted");
+                  fprintf(outfile[Il],",PathIsOcculted");
+                  fprintf(outfile[Il],"\n");
+               }
+            }
+         }
+
+         for(Il=0;Il<Nlink;Il++) {
+            L = &CommLink[Il];
+            if (L->OutEnabled) {
+               L->OutCtr++;
+               if (L->OutCtr > L->MaxOutCtr) {
+                  L->OutCtr = 1;
+                  fprintf(outfile[Il],"%18.12le",SimTime);
+                  fprintf(outfile[Il],",%18.12le",L->Doppler);
+                  fprintf(outfile[Il],",%18.12le",L->Loss);
+                  fprintf(outfile[Il],",%18.12le",L->Delay);
+                  fprintf(outfile[Il],",%18.12le",L->Carrier);
+                  fprintf(outfile[Il],",%18.12le",L->Noise);
+                  fprintf(outfile[Il],",%18.12le",L->CNR);
+                  fprintf(outfile[Il],",%18.12le",L->EIRP);
+                  fprintf(outfile[Il],",%18.12le",L->FreeSpacePathLoss);
+                  fprintf(outfile[Il],",%18.12le",L->PowerFluxDensity);
+                  fprintf(outfile[Il],",%18.12le",L->Range);
+                  fprintf(outfile[Il],",%18.12le",L->RangeRate);
+                  fprintf(outfile[Il],",%18.12le",L->TxAntGain);
+                  fprintf(outfile[Il],",%18.12le",L->RxAntGain);
+                  fprintf(outfile[Il],",%ld",L->TxOcculted);
+                  fprintf(outfile[Il],",%ld",L->RxOcculted);
+                  fprintf(outfile[Il],",%ld",L->PathIsOcculted);
+                  fprintf(outfile[Il],"\n");
+               }
+            }
+         }
+      }
+}
+/*********************************************************************/
 void Report(void)
 {
       static FILE *timefile;
@@ -445,6 +518,7 @@ void Report(void)
       
       WriteAcVarsToCsv();
       WriteScVarsToCsv();
+      WriteCommLinkToCsv();
       
       /* An example how to call specialized reporting based on sim case */
       /* if (!strcmp(InOutPath,"./Potato/")) PotatoReport(); */

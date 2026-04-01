@@ -7,7 +7,7 @@ PASSIVE_FSW                   !  Flight Software Identifier
 ************************* Orbit Parameters ****************************
 ENCKE                         !  Orbit Prop FIXED, EULER_HILL, or ENCKE
 CM                            !  Pos of CM or ORIGIN, wrt F
-20.0  0.0  0.0                !  Pos wrt Formation (m), expressed in F
+40.0  0.0  0.0                !  Pos wrt Formation (m), expressed in F
 0.0   0.0 -0.005               !  Vel wrt Formation (m/s), expressed in F
 *************************** Initial Attitude ***************************
 NAN                           ! Ang Vel wrt [NL], Att [QA] wrt [NLF]
@@ -28,7 +28,7 @@ NONE                        ! Shaker File Name
 1                             ! Number of Bodies
 ================================ Body 0 ================================
 1.0                           ! Mass
-1.0  2.0  4.0                 ! Moments of Inertia (kg-m^2)
+3.0  4.0  5.0                 ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0  0.0                 ! Constant Embedded Momentum (Nms)

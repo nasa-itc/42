@@ -379,6 +379,22 @@ long FswCmdInterpreter(char CmdLine[512],double *CmdTime)
          SC[Isc].AC.Thr[Ithr].ThrustLevelCmd = ThrLevelCmd;
       }
 
+      else if (sscanf(CmdLine,"%lf SC[%ld].AC.IdealTrq = [%lf %lf %lf]",
+         CmdTime,&Isc,&Vec[0],&Vec[1],&Vec[2]) == 5) {
+         NewCmdProcessed = TRUE;
+         SC[Isc].AC.IdealTrq[0] = Vec[0];
+         SC[Isc].AC.IdealTrq[1] = Vec[1];
+         SC[Isc].AC.IdealTrq[2] = Vec[2];
+      }
+
+      else if (sscanf(CmdLine,"%lf SC[%ld].AC.IdealFrc = [%lf %lf %lf]",
+         CmdTime,&Isc,&Vec[0],&Vec[1],&Vec[2]) == 5) {
+         NewCmdProcessed = TRUE;
+         SC[Isc].AC.IdealFrc[0] = Vec[0];
+         SC[Isc].AC.IdealFrc[1] = Vec[1];
+         SC[Isc].AC.IdealFrc[2] = Vec[2];
+      }
+
       else if (sscanf(CmdLine,"Event Eclipse Entry SC[%ld] qrl = [%lf %lf %lf %lf]",
          &Isc,&q[0],&q[1],&q[2],&q[3]) == 5) {
          *CmdTime = SimTime+DTSIM; /* Allows exiting while loop in CmdInterpreter */
@@ -614,11 +630,13 @@ void ThreeAxisAttitudeCommand(struct SCType *S)
 {
       struct JointType *G;
       struct BodyType *B;
+      struct AcJointType *AG;
       struct CmdType *Cmd;
       struct CmdVecType *PV, *SV;
       double CRN[3][3],C[3][3],qln[4],Cdot[3][3];
       double PriVecBi[3],SecVecBi[3],PriVecGi[3],SecVecGi[3];
       double PriVecGo[3],SecVecGo[3],CGoGi[3][3];
+      double AngErr;
       long Ig,Bi,i,j;
 
 
@@ -692,7 +710,8 @@ void ThreeAxisAttitudeCommand(struct SCType *S)
          G = &S->G[Ig];
          Bi = G->Bin;
          B = &S->B[Bi];
-         Cmd = &S->AC.G[Ig].GCmd;
+         AG = &S->AC.G[Ig];
+         Cmd = &AG->GCmd;
          PV = &Cmd->PriVec;
          SV = &Cmd->SecVec;
 
@@ -719,6 +738,12 @@ void ThreeAxisAttitudeCommand(struct SCType *S)
                PointGimbalToTarget(G->RotSeq,G->CGiBi,G->CBoGo,PriVecBi,
                   PV->R,Cmd->Ang);
             }
+            for(i=0;i<G->RotDOF;i++) {
+               AngErr = G->Ang[i] - Cmd->Ang[i];
+               Cmd->AngRate[i] = -AG->AngGain[i]/AG->AngRateGain[i]*AngErr;
+               Cmd->AngRate[i] = Limit(Cmd->AngRate[i],
+               -AG->MaxAngRate[i],AG->MaxAngRate[i]);
+               }
          }
       }
 }
@@ -1101,6 +1126,8 @@ void InstantFSW(struct SCType *S)
       struct AcInstantCtrlType *C;
       struct BodyType *B;
       struct CmdType *Cmd;
+      struct AcJointType *G;
+      struct CmdType *GC;
       double alpha[3],Iapp[3];
       double Hvnb[3],Herr[3],werr[3];
       long Ig,i,j;
@@ -1162,6 +1189,15 @@ void InstantFSW(struct SCType *S)
          VectorRampCoastGlide(C->therr,C->werr,
             C->wc,C->amax,C->vmax,alpha);
          for(i=0;i<3;i++) AC->IdealTrq[i] = AC->MOI[i][i]*alpha[i];
+         
+         for(Ig=0;Ig<AC->Ng;Ig++) {
+            G = &AC->G[Ig];
+            GC = &AC->G[Ig].GCmd;
+            for(i=0;i<G->RotDOF;i++) {
+               GC->AngRate[i] = -G->AngGain[i]*(G->Ang[i] - GC->Ang[i]);
+               GC->AngRate[i] = Limit(GC->AngRate[i],-G->MaxAngRate[i],G->MaxAngRate[i]);
+            }
+         }
       }
 
 }
@@ -1334,7 +1370,7 @@ void MomBiasFSW(struct SCType *S)
       }
 }
 /**********************************************************************/
-/* SC_Aura is a three-body three-axis stabilized S/C                */
+/* SC_Aura is a two-body three-axis stabilized S/C                */
 void ThreeAxisFSW(struct SCType *S)
 {
       double wln[3],CRN[3][3];
@@ -1822,7 +1858,7 @@ void LegPartials(struct SCType *S, long Il, double J[3][3])
       J[2][2] = l2*(c2*s3+c3*s2);
 }
 /**********************************************************************/
-void RoverFSW(struct SCType *S)
+void HexapodFSW(struct SCType *S)
 {
       struct AcType *AC;
       struct BodyType *B;
@@ -1864,8 +1900,8 @@ void RoverFSW(struct SCType *S)
          Init = 0;
          FindPDGains(S->mass,0.2*TwoPi,1.0,&Krx,&Kpx);
          FindPDGains(S->I[2][2],0.2*TwoPi,0.7,&Kra,&Kpa);
-         wx = TwoPi/1000.0;
-         wy = TwoPi/700.0;
+         wx = TwoPi/300.0;
+         wy = TwoPi/150.0;
       }
       
 /* .. Position, Orientation in Region */
@@ -1878,14 +1914,13 @@ void RoverFSW(struct SCType *S)
       
 /* .. Generate position and attitude commands from path */
       
-      PosCmd[0] = 20.0*sin(wx*SimTime);
-      PosCmd[1] = 15.0*sin(wy*SimTime);
-      VelCmd[0] = 20.0*wx*cos(wx*SimTime);
-      VelCmd[1] = 15.0*wy*cos(wy*SimTime);
+      PosCmd[0] =  20.0*sin(wx*SimTime);
+      PosCmd[1] =  10.0*sin(wy*SimTime);
+      VelCmd[0] =  20.0*wx*cos(wx*SimTime);
+      VelCmd[1] =  10.0*wy*cos(wy*SimTime);
       
       PosCmd[2] = 0.5;
       VelCmd[2] = 0.0;
-      YawCmd = atan2(VelCmd[1],VelCmd[0]);
       PitchCmd = 0.0;
       RollCmd = 0.0;
       
@@ -1896,18 +1931,20 @@ void RoverFSW(struct SCType *S)
       }
       MxV(CBR,PosErrR,PosErrB);
       MagPosErr = MAGV(PosErrB);
-      if (MagPosErr > 1.0) {
-         YawErr = Yaw + PosErrB[1]/MagPosErr;
+      if (MagPosErr > 2.0) {
+         YawCmd = atan2(-PosErrR[1],-PosErrR[0]);
+         YawErr = Yaw - YawCmd;
          while (YawErr < -Pi) YawErr += TwoPi;
-         while (Yaw > Pi) YawErr -= TwoPi;
-         YawRateCmd = Limit(-0.5*YawErr,-0.25,0.25);
+         while (YawErr > Pi) YawErr -= TwoPi;
+         YawRateCmd = Limit(-0.5*YawErr,-0.1,0.1);
          if (fabs(YawErr) > 0.25) SpdCmd = 0.1*MaxSpd;
          else SpdCmd = MaxSpd;
       }
       else {
+         YawCmd = atan2(VelCmd[1],VelCmd[0]);
          YawErr = Yaw - YawCmd + 0.2*PosErrB[1]/MagPosErr;
          while (YawErr < -Pi) YawErr += TwoPi;
-         while (Yaw > Pi) YawErr -= TwoPi;
+         while (YawErr > Pi) YawErr -= TwoPi;
          YawRateCmd = Limit(-0.5*YawErr,-0.1,0.1);
          SpdCmd = MAGV(VelCmd) - 0.5*PosErrB[0];
       }
@@ -2020,6 +2057,74 @@ void RoverFSW(struct SCType *S)
 #endif
 }
 /**********************************************************************/
+/* Lunar Comm Demonstration                                           */
+void LunarCommFSW(struct SCType *S)
+{
+      struct AcType *AC;
+      double CLN[3][3],CRN[3][3],qrn[4],wln[3];
+      double CRL[3][3] = {{ 1.0, 0.0, 0.0}, 
+                          { 0.0, 1.0, 0.0},
+                          { 0.0, 0.0, 1.0}}; 
+      static double Kr[3],Kp[3];
+      double werr[3],therr[3],Tcmd[3];
+      double AngErr[2];
+      static double IntgErr[2] = {0.0,0.0};
+      double GndPosN[3],GndPosH[3],ViewAxisN[3],ViewAxisB[3],GimCmd[3];
+      double Zvec[3] = {0.0,0.0,1.0};
+      long i;
+      static long Init = 1;
+
+      AC = &S->AC;
+
+      if (Init) {
+         Init = 0;
+         for(i=0;i<3;i++) {
+            FindPDGains(AC->MOI[i][i],0.1*TwoPi,0.7,&Kr[i],&Kp[i]);
+         }
+      }
+
+/* .. Form attitude error signals */
+      FindCLN(AC->PosN,AC->VelN,CLN,wln);
+      MxM(CRL,CLN,CRN);
+      C2Q(CRN,qrn);
+      QxQT(AC->qbn,qrn,AC->qbr);
+      //for(i=0;i<4;i++) AC->qbr[i] = AC->qbn[i];
+      RECTIFYQ(AC->qbr);
+      for(i=0;i<3;i++) {
+         therr[i] = Limit(2.0*AC->qbr[i],-0.01,0.01);
+         werr[i] = AC->wbn[i] - wln[i];
+      }
+
+/* .. Closed-loop attitude control */
+      for(i=0;i<3;i++) {
+         Tcmd[i] = -Kr[i]*werr[i]-Kp[i]*therr[i];
+      }
+      
+/* .. Point Antenna */
+      MTxV(World[EARTH].CWN,GroundStation[2].PosW,GndPosN); /* White Sands */
+      if (Orb[S->RefOrb].World == LUNA) {
+         for(i=0;i<3;i++) GndPosN[i] -= World[LUNA].eph.PosN[i];
+         MTxV(World[EARTH].CNH,GndPosN,GndPosH);
+         MxV(World[LUNA].CNH,GndPosH,GndPosN);  /* Luna N */
+      }
+      for(i=0;i<3;i++) ViewAxisN[i] = GndPosN[i] - S->PosN[i];
+      UNITV(ViewAxisN);
+      MxV(S->B[0].CN,ViewAxisN,ViewAxisB);
+      PointGimbalToTarget(12,S->G[0].CGiBi,S->G[0].CBoGo,ViewAxisB,Zvec,GimCmd);
+      for(i=0;i<2;i++) {
+         AC->G[0].GCmd.Ang[i] = GimCmd[i];
+         AngErr[i] = AC->G[0].Ang[i] - AC->G[0].GCmd.Ang[i];
+         AC->G[0].GCmd.AngRate[i] = -50.0*D2R*AngErr[i] - 10.0*D2R*IntgErr[i];
+         AC->G[0].GCmd.AngRate[i] = Limit(AC->G[0].GCmd.AngRate[i],
+            -0.5*D2R,0.5*D2R);
+         IntgErr[i] += AngErr[i]*AC->DT;
+         IntgErr[i] = Limit(IntgErr[i],-0.1,0.1);
+      }
+
+      for(i=0;i<3;i++) AC->IdealTrq[i] = Tcmd[i];
+      //for(i=0;i<3;i++) AC->Whl[i].Tcmd = -C->Tcmd[i];
+}
+/**********************************************************************/
 /*  This function is called at the simulation rate.  Sub-sampling of  */
 /*  control loops is managed by FswSampleCounter.                     */
 /*  Mode handling, command generation, error determination, feedback  */
@@ -2064,8 +2169,11 @@ void FlightSoftWare(struct SCType *S)
             case THR_FSW:
                ThrFSW(S);
                break;
-            case ROVER_FSW:
-               RoverFSW(S);
+            case HEXAPOD_FSW:
+               HexapodFSW(S);
+               break;
+            case LUNARCOMM_FSW:
+               LunarCommFSW(S);
                break;
             case CFS_FSW:
                #ifdef _AC_STANDALONE_

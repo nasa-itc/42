@@ -254,7 +254,7 @@ NoiseCol
 map_Spectrum Mars
 NoiseGain 0.5 0.25 0.125 0.0625
 NoiseBias 0.0
-NoiseScale 50.0
+NoiseScale 2000.0
 NoiseType 0
 
 newmtl CUBE_BLUE
@@ -273,6 +273,42 @@ illum 2
 Kd 0.3 0.25 0.1
 Ka 0.3 0.25 0.1
 Ks 1.0  1.0  1.0
+Ke 0.0 0.0 0.0
+
+newmtl FOREST_MATL  
+d 1.0
+Ns 20.0
+Ka 1.0  1.0  1.0 
+Kd 1.0  1.0  1.0
+Ks 0.1  0.1  0.1
+Ke 0.0  0.0  0.0
+NoiseCol
+map_Spectrum Forest
+NoiseGain 0.5 0.25 0.125 0.0625
+NoiseBias 0.0
+NoiseScale 2000.0
+NoiseType 0
+
+newmtl RIVER_MATL  
+d 1.0
+Ns 20.0
+Ka 1.0  1.0  1.0 
+Kd 1.0  1.0  1.0
+Ks 0.1  0.1  0.1
+Ke 0.0  0.0  0.0
+NoiseCol
+map_Spectrum River
+NoiseGain 0.5 0.25 0.125 0.0625
+NoiseBias 0.0
+NoiseScale 20.0
+NoiseType 0
+
+newmtl PROP_BLUR
+Ns 60.0
+d 0.3
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
 Ke 0.0 0.0 0.0
 
 

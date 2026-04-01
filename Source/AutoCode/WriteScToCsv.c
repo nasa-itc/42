@@ -53,6 +53,12 @@ void WriteScToCsv(void)
                   fprintf(outfile[Isc],",Sc_VelR_%ld",i+1);
                }
                for(i=0;i<3;i++) {
+                  fprintf(outfile[Isc],",Sc_PosN_%ld",i+1);
+               }
+               for(i=0;i<3;i++) {
+                  fprintf(outfile[Isc],",Sc_VelN_%ld",i+1);
+               }
+               for(i=0;i<3;i++) {
                   fprintf(outfile[Isc],",Sc_svb_%ld",i+1);
                }
                for(i=0;i<3;i++) {
@@ -84,6 +90,12 @@ void WriteScToCsv(void)
                }
                for(i=0;i<3;i++) {
                   fprintf(outfile[Isc],",%18.12le",S->VelR[i]);
+               }
+               for(i=0;i<3;i++) {
+                  fprintf(outfile[Isc],",%18.12le",S->PosN[i]);
+               }
+               for(i=0;i<3;i++) {
+                  fprintf(outfile[Isc],",%18.12le",S->VelN[i]);
                }
                for(i=0;i<3;i++) {
                   fprintf(outfile[Isc],",%18.12le",S->svb[i]);

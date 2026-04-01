@@ -1778,7 +1778,7 @@ void WriteAcBufLensToSocket(struct AcIpcType *I)
       int MsgLen = 0;
       int Success;
 
-      Msg = (char *) calloc(3,sizeof(long));
+      Msg = (char *) calloc(3+1,sizeof(long));
 
       NumBytes = sizeof(long);
       memcpy(&Msg[MsgLen],&I->AcInBufLen,NumBytes);

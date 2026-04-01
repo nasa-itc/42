@@ -142,7 +142,8 @@ long DecodeString(char *s)
       else if (!strcmp(s,"CMG_FSW")) return CMG_FSW;
       else if (!strcmp(s,"THR_FSW")) return THR_FSW;
       else if (!strcmp(s,"CFS_FSW")) return CFS_FSW;
-      else if (!strcmp(s,"ROVER_FSW")) return ROVER_FSW;
+      else if (!strcmp(s,"HEXAPOD_FSW")) return HEXAPOD_FSW;
+      else if (!strcmp(s,"LUNARCOMM_FSW")) return LUNARCOMM_FSW;
 
       else if (!strcmp(s,"PHOBOS")) return PHOBOS;
       else if (!strcmp(s,"DEIMOS")) return DEIMOS;
@@ -243,7 +244,9 @@ long DecodeString(char *s)
       else if (!strcmp(s,"CONCAVE")) return OPT_CONCAVE;
       else if (!strcmp(s,"CONVEX")) return OPT_CONVEX;
       
-      
+      else if (!strcmp(s,"UPLINK")) return UPLINK;
+      else if (!strcmp(s,"DOWNLINK")) return DOWNLINK;
+      else if (!strcmp(s,"CROSSLINK")) return CROSSLINK;
 
       else {
          printf("Bogus input %s in DecodeString (42init.c:%d)\n",s,__LINE__);
@@ -2080,6 +2083,10 @@ void InitSpacecraft(struct SCType *S)
          B->I[1][0] = B->I[0][1];
          B->I[2][0] = B->I[0][2];
          B->I[2][1] = B->I[1][2];
+         if (!InertiasArePhysical(B->I)) {
+            printf("SC[%ld].B[%ld] inertias are not physically realizable.\n",
+               S->ID,Ib);
+         }
          fscanf(infile,"%lf %lf %lf %[^\n] %[\n]",&B->cm[0],
                   &B->cm[1],&B->cm[2],junk,&newline);
          fscanf(infile,"%lf %lf %lf %[^\n] %[\n]",&B->EmbeddedMom[0],
@@ -3030,7 +3037,7 @@ void LoadPlanets(void)
                                 "Pluto"};
       char MapFileName[10][20] = {"NONE","Rockball","Venus.ppm","Earth.ppm","Mars.ppm",
          "Jupiter.ppm","Saturn.ppm","Uranus.ppm","Neptune.ppm","Iceball"};
-      double Mu[10] = {1.32715E20,2.18E13,3.2485E14,3.986004E14,
+      double Mu[10] = {1.32715E20,2.18E13,3.2485E14,3.986004418E14,
                        4.293E13,1.2761E17,3.792E16,5.788E15,6.8E15,
                        3.2E14};
       double J2[10] = {0.0,0.0,0.0,1.08263E-3,1.96045E-3,0.0,0.0,0.0,0.0,0.0};
@@ -3128,7 +3135,7 @@ void LoadPlanets(void)
       World[EARTH].Atmo.RayScat[1] = 13.5E-6;
       World[EARTH].Atmo.RayScat[2] = 33.1E-6;
       World[EARTH].Atmo.RayScaleHt = 8000.0;
-      World[EARTH].Atmo.MieScat = 4.0E-6;
+      World[EARTH].Atmo.MieScat = 2.0E-5;
       World[EARTH].Atmo.MieScaleHt = 1200.0;
       World[EARTH].Atmo.MieG = 0.76;
       World[EARTH].Atmo.MaxHt = 8.0*World[EARTH].Atmo.RayScaleHt;
@@ -4543,17 +4550,10 @@ void InitSim(int argc, char **argv)
       qjh[2] = 0.0;
       qjh[3] = 0.979153221449;
       
-      #ifdef _ENABLE_RBT_
-         sprintf(InOutPath,"../../GSFC/RBT/InOut/");
-         sprintf(ModelPath,"../../GSFC/RBT/Model/");
-         if (argc > 1) sprintf(InOutPath,"../../GSFC/RBT/%s/",argv[1]);
-         if (argc > 2) sprintf(ModelPath,"../../GSFC/RBT/%s/",argv[2]);
-      #else
-         sprintf(InOutPath,"./InOut/");
-         sprintf(ModelPath,"./Model/");
-         if (argc > 1) sprintf(InOutPath,"./%s/",argv[1]);
-         if (argc > 2) sprintf(ModelPath,"./%s/",argv[2]);
-      #endif
+      sprintf(InOutPath,"InOut/");
+      sprintf(ModelPath,"Model/");
+      if (argc > 1) sprintf(InOutPath,"%s/",argv[1]);
+      if (argc > 2) sprintf(ModelPath,"%s/",argv[2]);
 
 /* .. Read from file Inp_Sim.txt */
       infile=FileOpen(InOutPath,"Inp_Sim.txt","r");

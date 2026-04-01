@@ -21,6 +21,13 @@
 #include "glkit.h"
 #undef EXTERN
 
+/* 32-bit textures give more accuracy, if supported */
+#ifdef GL_RGBA32F
+   #define TEX_FMT GL_RGBA32F
+#else
+   #define TEX_FMT GL_RGBA
+#endif
+
 GLuint EarthAlbedoCubeTag;
 GLuint GenericAlbedoCubeTag;
 GLuint AlbedoWindow;
@@ -59,7 +66,7 @@ void InitAlbedo(void)
       /* Create Textures */
       glGenTextures(1,(GLuint *) &A->TexTag);
       glBindTexture(GL_TEXTURE_2D,A->TexTag);
-      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,A->Width,A->Height,0,
+      glTexImage2D(GL_TEXTURE_2D,0,TEX_FMT,A->Width,A->Height,0,
          GL_RGBA,GL_FLOAT,NULL);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
@@ -70,7 +77,7 @@ void InitAlbedo(void)
       glGenRenderbuffers(1,&A->RenderTag);
       glBindRenderbuffer(GL_RENDERBUFFER,A->RenderTag);
       glRenderbufferStorage(GL_RENDERBUFFER,
-         GL_RGBA,A->Width,A->Height);
+         TEX_FMT,A->Width,A->Height);
 
       glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,A->TexTag,0);
 

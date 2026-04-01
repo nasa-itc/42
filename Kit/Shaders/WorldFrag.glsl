@@ -20,120 +20,233 @@ uniform samplerCube MapTexture;
 uniform samplerCube BumpTexture;                                       
 uniform samplerCube CloudGlossTexture;                                 
 uniform sampler1D RingTexture;                                         
-uniform bool HasAtmo;  
+uniform bool HasAtmo;
+uniform bool HasRing;  
+uniform vec3 GasColor;
+uniform vec3 DustColor;
 uniform vec3 Br;
 uniform float Bm;
 uniform float Hr;
-uniform float Hm;
-uniform float Gm;                                                
+uniform float Hm;                                               
 uniform vec3 UnitWorldVecE;                                                  
 uniform float CosWorldAng;
 uniform float CosAtmoAng;
+uniform float CosSunAng;
 uniform float CosRingAng;
 uniform float WorldRad;
+uniform float AtmoRad;
 uniform vec3 PosEyeW;
 uniform float MagPosEye; 
 uniform mat3 CWE; 
-uniform bool HasRing;
                                                                        
 varying vec3 SunVecE; 
 varying vec3 ViewVecInPlane;                                                
 
 /**********************************************************************/
-vec2 ProjectRayOntoSphere(vec3 Pos, vec3 Axis, float Rad)
+/* Returns (Near,Far,Meets)                                           */
+vec3 ProjectRayOntoSphere(vec3 Pos, vec3 Axis, float Rad)
 {
       float PoA = dot(Pos,Axis);
       float P2 = dot(Pos,Pos);
       float Disc = PoA*PoA-P2+Rad*Rad;
       if (Disc > 0.0) {
          float SqrtD = sqrt(Disc);
-         return(vec2(-PoA-SqrtD,-PoA+SqrtD));
+         return(vec3(-PoA-SqrtD,-PoA+SqrtD,1.0));
       }
       else {
-         return(vec2(0.0,0.0));
+         return(vec3(-PoA,-PoA,0.0));
       }
 }
 /**********************************************************************/
-/* Ang is the angle between the incoming and outgoing ray             */
-float RayleighPhase(float CosAng)
+vec4 OpticalDepth(vec3 StartPt, vec3 EndPt, vec3 SunVec, float Rg)
 {
-      return(0.059683*(1.0+CosAng*CosAng));
-}
-/**********************************************************************/
-/* Ang is the angle between the incoming and outgoing ray             */
-float MiePhase(float CosAng, float g)
-{
-      float g2 = g*g;
-      float x = 1.0+g2-2.0*g*CosAng;
-
-      return(0.11937*(1.0-g2)*(1.0+CosAng*CosAng)/((2.0+g2)*x*sqrt(x)));
-}
-/**********************************************************************/
-vec4 Transmittance(vec3 xa, vec3 xb, float Rg, float Rt,
-   vec3 Br, float Hr, float Bm, float Hm)
-{
-      float du = 0.0625;
-      vec3 dx;
-      vec4 IntB = vec4(0.0,0.0,0.0,0.0);
-      float u,h,er,em,ds;
-      vec3 Y;
-
-      dx = xb - xa;
-      ds = length(dx)*du;
-
-      for(u=0.5*du;u<1.0;u+=du) {
-         Y = xa + u*dx;
-         h = length(Y) - Rg;
-         er = exp(-h/Hr);
-         em = exp(-h/Hm);
-         IntB.xyz += (Br*er+Bm*em)*ds;
-         IntB.w += (er+em)*du;
+      float du,dL;
+      float h,u;
+      float DayODr = 0.0;
+      float EclODr = 0.0;
+      float DayODm = 0.0;
+      float EclODm = 0.0;
+      float PoS;
+      vec3 Pt;
+      vec4 OD;
+      
+      du = 0.001;
+      dL = du*length(EndPt-StartPt);
+      
+      /* Trapezoid Integration */
+      h = length(StartPt)-Rg;
+      PoS = dot(StartPt,SunVec);
+      if (PoS > 0.0 || length(StartPt-PoS*SunVec) > Rg) {
+         /* Daylit */
+         DayODr += 0.5*exp(-h/Hr);
+         DayODm += 0.5*exp(-h/Hm);
       }
-
-      /* Transmittance, T */
-      return(vec4(exp(-IntB.xyz),IntB.w));
-}
-/**********************************************************************/
-vec4 Inscattering(vec3 xa, vec3 xb, vec3 SunVec,float Rg, float Rt, 
-   vec3 Br, float Hr, float Bm, float Hm,float g)
-{
-      vec3 dx, ViewVec;
-      float ds,CosAng,Pr,Pm,u;
-      vec3 Y;
-      vec4 Txy;
-      float du = 0.125;
-      vec4 S = vec4(0.0,0.0,0.0,0.0);
-      float m,YoS,YoY;
-
-      dx = xb-xa;
-      ds = length(dx)*du;
-
-      ViewVec = normalize(dx);
-
-      CosAng = dot(ViewVec,SunVec);
-      Pr = RayleighPhase(CosAng);
-      Pm = MiePhase(CosAng,g);
-
-      for(u=0.5*du;u<1.0;u+=du) {
-         Y = xa + u*dx;
-         YoS = dot(Y,SunVec);
-         YoY = dot(Y,Y);
-         if (YoS > 0.0 || (YoY-YoS*YoS) > Rg*Rg) {
-            Txy = Transmittance(xa,Y,Rg,Rt,Br,Hr,Bm,Hm);
-            S.xyz += Txy.xyz*(Br*Pr+Bm*Pm)*ds;
-            S.w += Txy.w;
+      else {
+         /* Eclipsed */
+         EclODr += 0.5*exp(-h/Hr);
+         EclODm += 0.5*exp(-h/Hm);
+      }
+      
+      for(u=du;u<1.0-du;u+=du) {
+         Pt = (1.0-u)*StartPt + u*EndPt;
+         h = length(Pt)-Rg;
+         PoS = dot(Pt,SunVec);
+         if (PoS > 0.0 || length(Pt-PoS*SunVec) > Rg) {
+            /* Daylit */
+            DayODr += exp(-h/Hr);
+            DayODm += exp(-h/Hm);
+         }
+         else {
+            /* Eclipsed */
+            EclODr += exp(-h/Hr);
+            EclODm += exp(-h/Hm);
          }
       }
       
-      m = 0.0;
-      if (S.x > m) m = S.x;
-      if (S.y > m) m = S.y;
-      if (S.z > m) m = S.z;
-      if (m > 1.0) S.xyz /= m;
-      S.xyz = 1.0-exp(-S.xyz);
-      if (S.w > 1.0) S.w = 1.0;
+      h = length(EndPt)-Rg;
+      PoS = dot(EndPt,SunVec);
+      if (PoS > 0.0 || length(EndPt-PoS*SunVec) > Rg) {
+         /* Daylit */
+         DayODr += 0.5*exp(-h/Hr);
+         DayODm += 0.5*exp(-h/Hm);
+      }
+      else {
+         /* Eclipsed */
+         EclODr += 0.5*exp(-h/Hr);
+         EclODm += 0.5*exp(-h/Hm);
+      }  
+      OD = vec4(DayODr,EclODr,DayODm,EclODm)*dL;    
       
-      return(S);
+      return(OD);
+}
+/**********************************************************************/
+vec4 SkyColor(float EoW, vec3 ViewVecW, vec3 SunVecW)
+{     
+      vec4 SkyCol;
+      vec3 Int3;
+      float NearTop,FarTop;
+      bool MeetsTop;
+      vec4 OD;
+      float TotOD;
+      float m,f,VoS;
+      vec3 SunCol;
+
+      Int3 = ProjectRayOntoSphere(PosEyeW,ViewVecW,AtmoRad);
+      NearTop = Int3[0];
+      FarTop = Int3[1];
+      MeetsTop = bool(Int3[2]);
+
+      if (MagPosEye > AtmoRad) {
+         OD = OpticalDepth(PosEyeW+NearTop*ViewVecW,PosEyeW+FarTop*ViewVecW,
+            SunVecW,WorldRad);
+      }
+      else {
+         OD = OpticalDepth(PosEyeW,PosEyeW+FarTop*ViewVecW,
+            SunVecW,WorldRad);
+      }
+      TotOD = OD[0]+OD[1];
+      SkyCol.rgb = (OD[0]+0.1*OD[1])/TotOD*GasColor;
+
+      SkyCol.rgb += 0.5*(1.0-exp(-Br*OD[0]));
+      SkyCol.a = 1.0-exp(-2.0*(OD[0]+0.1*OD[1])/Hr);
+
+      /* Add Sun */
+      SunCol = exp(-0.5*Br*TotOD);
+      m = max(SunCol[0],max(SunCol[1],SunCol[2]));
+      SunCol /= m;
+      VoS = dot(ViewVecW,SunVecW);
+      if (VoS > CosSunAng) {
+         SkyCol = vec4(SunCol,1.0);
+      }
+      else if (VoS > 0.0 || 
+         length(ViewVecW-VoS*SunVecW) > WorldRad) {
+         f = clamp(1.0E-4/(1.0-0.9999995*VoS),0.0,1.0);
+         SkyCol.rgb = (1.0-f)*SkyCol.rgb + f*SunCol;
+      }
+
+      return(SkyCol);
+}
+/**********************************************************************/
+vec4 GroundColor(vec3 ViewVecW, vec3 SunVecW)
+{
+      vec4 AmbientLight = vec4(0.25,0.25,0.25,1.0);
+      vec4 DiffuseLight = vec4(0.75,0.75,0.75,1.0);
+      vec4 SpecularLight = vec4(1.0,1.0,1.0,1.0);
+      vec4 Ring; 
+      float RingK;                                                      
+      float RingCoord;                                                 
+      float DiffIllum;                                                 
+      float SpecIllum;                                                 
+      vec3 HalfVec; 
+      vec3 GndPosW;
+      vec3 UnitGndPosW;
+      float NoH;                                                       
+      float Gloss;
+      vec4 MapColor;
+      vec4 Diffuse;
+      vec4 OD;
+      float TotOD;
+      vec4 AirCol = vec4(0.0,0.0,0.0,1.0);
+
+      float EoV = dot(PosEyeW,ViewVecW);
+      float E2 = dot(PosEyeW,PosEyeW);
+      float Disc = EoV*EoV-E2+WorldRad*WorldRad;
+      float Dist = -EoV-sqrt(Disc);
+      GndPosW = PosEyeW+Dist*ViewVecW;
+      UnitGndPosW = normalize(GndPosW);
+
+      /* MapColor */
+      MapColor = vec4(vec3(textureCube(MapTexture,UnitGndPosW)),1.0);
+      
+      /* Illumination */
+      vec3 Normal = normalize(UnitGndPosW+vec3(textureCube(BumpTexture,UnitGndPosW))-0.5);  
+      vec2 CloudGloss = vec2(textureCube(CloudGlossTexture,UnitGndPosW));  
+      /* Check for Ring Shadow */
+      if (HasRing) {
+         RingK = step(0.0,-UnitGndPosW.z*SunVecW.z)*(-UnitGndPosW.z/SunVecW.z);                                      
+         RingCoord = clamp(length(vec2(UnitGndPosW+RingK*SunVecW))-1.5,-0.5,10.0);                                        
+         Ring = texture1D(RingTexture,RingCoord); 
+         DiffIllum = clamp(dot(Normal,SunVecW),0.0,1.0)*(1.0-Ring.a);
+      }
+      else if (HasAtmo) {
+         DiffIllum = clamp(5.0*dot(Normal,SunVecW),0.0,1.0);
+      }
+      else DiffIllum = clamp(dot(Normal,SunVecW),0.0,1.0);                                                                
+      /* Specular Illumination */                                      
+      HalfVec = normalize(SunVecW+normalize(PosEyeW)); 
+      Gloss = DiffIllum*CloudGloss.g;                                  
+      NoH = clamp(dot(Normal,HalfVec),0.0,1.0);                        
+      SpecIllum = Gloss*pow(NoH,50.0);           
+   
+      /* Sum Ambient with Diffuse Term */                              
+      Diffuse = AmbientLight;             
+      vec4 Spec = vec4(0.0,0.0,0.0,1.0);                               
+      /* Primary Color */                                              
+      Diffuse += DiffIllum*DiffuseLight;                  
+      /* Secondary Color */                                            
+      Spec += SpecIllum*SpecularLight;                    
+      /* Ground Color */                                               
+      vec4 GndColor = Diffuse*MapColor+Spec*vec4(0.5,0.5,0.5,1.0); 
+      GndColor.a = 1.0; 
+
+      /* Add aerial perspective */
+      if (HasAtmo) {
+         if (MagPosEye > AtmoRad) {
+            Disc = EoV*EoV-E2+AtmoRad*AtmoRad;
+            Dist = -EoV-sqrt(Disc);
+            OD = OpticalDepth(PosEyeW+Dist*ViewVecW,GndPosW,
+               SunVecW,WorldRad);
+         }
+         else {
+            OD = OpticalDepth(PosEyeW,GndPosW,SunVecW,WorldRad);
+         }
+         TotOD = OD[0]+OD[1];
+         AirCol.rgb = (OD[0]+0.1*OD[1])/TotOD*GasColor;
+         AirCol.rgb *= 1.0-exp(-(OD[0]+0.1*OD[1])/Hr);
+         GndColor.rgb += 0.25*AirCol.rgb;
+      }
+
+      return(GndColor);
 }
 /**********************************************************************/
 void main(void)                                                        
@@ -144,22 +257,13 @@ void main(void)
       float DiffIllum;                                                 
       float SpecIllum;                                                 
       vec3 HalfVec; 
-      vec3 GndPosW;
-      vec3 UnitGndPosW;
+
       vec3 RingPosW;
-      vec2 Intersect;                                                   
       float NoH;                                                       
       float Gloss;
-      vec3 NearPosW,FarPosW,TopPosW;
-      vec4 MapColor;
-      vec4 AtmoColor; 
-      vec4 TransTopGnd;
-      vec4 TransGndEye;
-      vec4 TransTopEye;
-      vec4 InScat;
       vec4 Diffuse;
-      vec4 AmbientLight = vec4(0.25,0.25,0.25,1.0);
-      vec4 DiffuseLight = vec4(0.75,0.75,0.75,1.0);
+      vec4 AmbientLight = vec4(0.15,0.15,0.15,1.0);
+      vec4 DiffuseLight = vec4(0.85,0.85,0.85,1.0);
       vec4 SpecularLight = vec4(1.0,1.0,1.0,1.0);
       
       vec3 ViewVecE = normalize(ViewVecInPlane);
@@ -167,95 +271,15 @@ void main(void)
       float EoW = dot(ViewVecE,UnitWorldVecE); 
       vec3 ViewVecW =  CWE*ViewVecE;
       vec3 SunVecW = CWE*SunVecE;         
-      
-      float AtmoHt = 8.0*Hr;
-      float AtmoRad = WorldRad + AtmoHt; 
             
       gl_FragColor = vec4(0.0,0.0,0.0,0.0);
 
 /* .. Draw World */
-      
       if (EoW > CosWorldAng) {
-         Intersect = ProjectRayOntoSphere(PosEyeW,ViewVecW,WorldRad);
-         /* Use nearest intersection with ground */
-         GndPosW = PosEyeW + Intersect.x*ViewVecW;
-         UnitGndPosW = normalize(GndPosW);
-         if (MagPosEye < AtmoRad) {
-            NearPosW = PosEyeW;
-         }
-         else {
-            Intersect = ProjectRayOntoSphere(PosEyeW,ViewVecW,AtmoRad);
-            NearPosW = PosEyeW + Intersect.x*ViewVecW;
-         }
-         Intersect = ProjectRayOntoSphere(GndPosW,SunVecW,AtmoRad);
-         TopPosW = GndPosW + Intersect.y*SunVecW;
-
-         /* MapColor */
-         MapColor = vec4(vec3(textureCube(MapTexture,UnitGndPosW)),1.0);
-         
-         /* Illumination */
-         vec3 Normal = normalize(UnitGndPosW+vec3(textureCube(BumpTexture,UnitGndPosW))-0.5);  
-         vec2 CloudGloss = vec2(textureCube(CloudGlossTexture,UnitGndPosW));  
-         /* Check for Ring Shadow */
-         if (HasRing) {
-            RingK = step(0.0,-UnitGndPosW.z*SunVecW.z)*(-UnitGndPosW.z/SunVecW.z);                                      
-            RingCoord = clamp(length(vec2(UnitGndPosW+RingK*SunVecW))-1.5,-0.5,10.0);                                        
-            Ring = texture1D(RingTexture,RingCoord); 
-            DiffIllum = clamp(dot(Normal,SunVecW),0.0,1.0)*(1.0-Ring.a);
-         }
-         else DiffIllum = clamp(dot(Normal,SunVecW),0.0,1.0);                                                                
-         /* Specular Illumination */                                      
-         HalfVec = normalize(SunVecW+normalize(PosEyeW)); 
-         Gloss = DiffIllum*CloudGloss.g;                                  
-         NoH = clamp(dot(Normal,HalfVec),0.0,1.0);                        
-         SpecIllum = Gloss*pow(NoH,10.0);           
-      
-         /* Sum Ambient with Diffuse Term */                              
-         Diffuse = AmbientLight;             
-         vec4 Spec = vec4(0.0,0.0,0.0,1.0);                               
-         /* Primary Color */                                              
-         Diffuse += DiffIllum*DiffuseLight;                  
-         /* Secondary Color */                                            
-         Spec += SpecIllum*SpecularLight;                    
-         /* Ground Color */                                               
-         vec4 GndColor = Diffuse*MapColor+Spec*vec4(0.35,0.35,0.35,1.0); 
-         GndColor.a = 1.0; 
-         
-         /* Atmo Scattering */
-         if (HasAtmo) {
-            TransTopGnd = Transmittance(GndPosW,TopPosW,WorldRad,AtmoRad,
-               Br,Hr,Bm,Hm);
-            TransGndEye = Transmittance(NearPosW,GndPosW,WorldRad,AtmoRad,
-               Br,Hr,Bm,Hm);
-            InScat = Inscattering(NearPosW,GndPosW,SunVecW,WorldRad,AtmoRad,
-               Br,Hr,Bm,Hm,Gm);
-                       
-            /* Clouds? */
-            //TransGndEye = mix(TransGndEye,vec4(1.0,1.0,1.0,1.0),CloudGloss.r);                             
-                                                                       
-            //gl_FragColor = mix(GndColor,Diffuse,CloudGloss.r);
-            
-            gl_FragColor.rgb = TransTopGnd.rgb*GndColor.rgb*TransGndEye.rgb
-               + DiffuseLight.rgb*InScat.rgb + AmbientLight.rgb*MapColor.rgb;
-         }
-         else {
-            gl_FragColor = GndColor;
-         }         
-         gl_FragColor.a = 1.0;
-                   
+         gl_FragColor = GroundColor(ViewVecW,SunVecW);
       }
-      else if (HasAtmo && EoW > CosAtmoAng) {
-         Intersect = ProjectRayOntoSphere(PosEyeW,ViewVecW,AtmoRad);
-         if (MagPosEye < AtmoRad) {
-            NearPosW = PosEyeW;
-         }
-         else {
-            NearPosW = PosEyeW + Intersect.x*ViewVecW;;
-         }
-         FarPosW = PosEyeW + Intersect.y*ViewVecW;;
-         InScat = Inscattering(NearPosW,FarPosW,SunVecW,WorldRad,AtmoRad,
-            Br,Hr,Bm,Hm,Gm);
-         gl_FragColor = InScat;
+      else if (EoW > CosAtmoAng) {
+         gl_FragColor = SkyColor(EoW,ViewVecW,SunVecW);
       }
       
 /* .. Draw Ring */

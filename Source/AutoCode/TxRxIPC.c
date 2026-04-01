@@ -9,6 +9,7 @@ void WriteToSocket(SOCKET Socket,  char **Prefix, long Nprefix, long EchoEnabled
       struct SCType *S;
       struct WorldType *W;
       struct OrbitType *O;
+      struct CommLinkType *L;
       int Success;
       char Ack[4] = "Ack\0";
       long Is,Ipfx;
@@ -451,6 +452,75 @@ void WriteToSocket(SOCKET Socket,  char **Prefix, long Nprefix, long EchoEnabled
             }
          }
 
+         for(Is=0;Is<Nlink;Is++) {
+            if (CommLink[Is].Exists) {
+               L = &CommLink[Is];
+
+               sprintf(line,"CommLink[%ld].Doppler = %18.12le\n",Is,
+                  L->Doppler);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].Delay = %18.12le\n",Is,
+                  L->Delay);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].Carrier = %18.12le\n",Is,
+                  L->Carrier);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].CNR = %18.12le\n",Is,
+                  L->CNR);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].Range = %18.12le\n",Is,
+                  L->Range);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].RangeRate = %18.12le\n",Is,
+                  L->RangeRate);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+
+               sprintf(line,"CommLink[%ld].PathIsOcculted = %ld\n",Is,
+                  L->PathIsOcculted);
+               if (!strncmp(line,Prefix[Ipfx],PfxLen)) {
+                  LineLen = strlen(line);
+                  memcpy(&Msg[MsgLen],line,LineLen);
+                  MsgLen += LineLen;
+                  if (EchoEnabled) printf("%s",line);
+               }
+            }
+         }
+
       }
 
       sprintf(line,"[ENDMSG]\n");
@@ -484,6 +554,7 @@ void ReadFromSocket(SOCKET Socket, long EchoEnabled)
       long Imsg,Iline;
       int NumBytes;
       double DbleVal[30];
+      long LongVal[30];
       long Year,doy,Hour,Minute;
       double Second;
       char Ack[4] = "Ack\0";
@@ -752,6 +823,55 @@ void ReadFromSocket(SOCKET Socket, long EchoEnabled)
          Orb[Is].VelN[0] = DbleVal[0];
          Orb[Is].VelN[1] = DbleVal[1];
          Orb[Is].VelN[2] = DbleVal[2];
+      }
+
+      if (sscanf(line,"CommLink[%ld].Doppler = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].Doppler = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].Delay = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].Delay = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].Carrier = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].Carrier = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].CNR = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].CNR = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].Range = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].Range = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].RangeRate = %le",
+         &Is,
+         &DbleVal[0]) == 2)
+      {
+         CommLink[Is].RangeRate = DbleVal[0];
+      }
+
+      if (sscanf(line,"CommLink[%ld].PathIsOcculted = %ld",
+         &Is,
+         &LongVal[0]) == 2)
+      {
+         CommLink[Is].PathIsOcculted = LongVal[0];
       }
          if (!strncmp(line,"[ENDMSG]",8)) {
             Done = 1;

@@ -7,7 +7,8 @@ SERVER                                  ! Socket Role (SERVER,CLIENT,GMSEC_CLIEN
 localhost     10001                     ! Server Host Name, Port 
 TRUE                                    ! Allow Blocking (i.e. wait on RX)
 TRUE                                    ! Echo to stdout
-3                                       ! Number of TX prefixes
+4                                       ! Number of TX prefixes
 "SC"                                    ! Prefix 0
 "Orb"                                   ! Prefix 1
 "World"                                 ! Prefix 2
+"CommLink"                              ! Prefix 3

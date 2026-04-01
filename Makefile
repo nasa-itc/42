@@ -111,7 +111,7 @@ endif
 
 ifeq ($(42PLATFORM),__linux__)
    # Linux Macros
-   CINC =
+   CINC = -I /usr/include/
    EXTERNDIR =
    ARCHFLAG =
    # For graphics interface, choose GLUT or GLFW GUI libraries
@@ -161,7 +161,7 @@ ifeq ($(42PLATFORM),__MSYS__)
       LFLAGS = -L $(GLUT)lib/ -L $(GLEW)lib/
       GUIOBJ = $(OBJ)42gl.o $(OBJ)42glut.o $(OBJ)glkit.o $(OBJ)42gpgpu.o
       GLINC = -I $(GLEW)include/GL/ -I $(GLUT)include/GL/
-      ARCHFLAG = -D GLUT_NO_LIB_PRAGMA -D GLUT_NO_WARNING_DISABLE -D GLUT_DISABLE_ATEXIT_HACK
+      ARCHFLAG = -D GLUT_NO_LIB_PRAGMA -D GLUT_NO_WARNING_DISABLE -D GLUT_DISABLE_ATEXIT_HACK -D GLEW_STATIC
    else
       GUIOBJ =
       GLINC =
@@ -216,8 +216,8 @@ endif
 #endif
 
 42OBJ = $(OBJ)42main.o $(OBJ)42exec.o $(OBJ)42actuators.o $(OBJ)42cmd.o \
-$(OBJ)42dynamics.o $(OBJ)42environs.o $(OBJ)42ephem.o $(OBJ)42fsw.o \
-$(OBJ)42init.o $(OBJ)42ipc.o $(OBJ)42jitter.o $(OBJ)42joints.o \
+$(OBJ)42commlink.o $(OBJ)42dynamics.o $(OBJ)42environs.o $(OBJ)42ephem.o \
+$(OBJ)42fsw.o $(OBJ)42init.o $(OBJ)42ipc.o $(OBJ)42jitter.o $(OBJ)42joints.o \
 $(OBJ)42optics.o $(OBJ)42perturb.o $(OBJ)42report.o $(OBJ)42sensors.o
 
 KITOBJ = $(OBJ)dcmkit.o $(OBJ)envkit.o $(OBJ)fswkit.o  $(OBJ)iokit.o \
@@ -235,7 +235,7 @@ AUTOOBJ = $(OBJ)WriteAcToCsv.o $(OBJ)WriteScToCsv.o $(OBJ)TxRxIPC.o
 #ANSIFLAGS = -Wstrict-prototypes -pedantic -ansi -Werror
 ANSIFLAGS =
 
-CFLAGS = -std=c11 -g -O0 -fpic -Wall -Wshadow -Wno-deprecated $(XWARN) $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) $(GMSECINC) $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG)
+CFLAGS = -std=gnu11 -g -O0 -fpic -Wall -Wshadow -Wno-deprecated $(XWARN) $(ANSIFLAGS) $(GLINC) $(CINC) -I $(INC) -I $(KITINC) -I $(KITSRC) $(GMSECINC) $(ARCHFLAG) $(GUIFLAG) $(GUI_LIB) $(SHADERFLAG) $(CFDFLAG) $(FFTBFLAG) $(GSFCFLAG) $(GMSECFLAG) $(STANDALONEFLAG)
 
 
 ##########################  Rules to link 42  #############################
@@ -263,6 +263,9 @@ $(OBJ)42actuators.o : $(SRC)42actuators.c $(INC)42.h $(INC)Ac.h $(INC)AcTypes.h
 
 $(OBJ)42cmd.o : $(SRC)42cmd.c $(INC)42.h $(INC)Ac.h $(INC)AcTypes.h
 	$(CC) $(CFLAGS) -c $(SRC)42cmd.c -o $(OBJ)42cmd.o
+
+$(OBJ)42commlink.o  : $(SRC)42commlink.c $(INC)42.h
+	$(CC) $(CFLAGS) -c $(SRC)42commlink.c -o $(OBJ)42commlink.o
 
 $(OBJ)42dynamics.o  : $(SRC)42dynamics.c $(INC)42.h
 	$(CC) $(CFLAGS) -c $(SRC)42dynamics.c -o $(OBJ)42dynamics.o

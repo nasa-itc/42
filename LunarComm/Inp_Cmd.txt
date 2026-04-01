@@ -1,16 +1,7 @@
 <<<<<<<<<<<<<<<<<  42:  Command Script File  >>>>>>>>>>>>>>>>>
-#0.0 CaptureCam TRUE
-#0.0 Banner = "Hit P to unpause" 
-#6.0 GL Output Step = 0.02
-#7.0 GL Output Step = 0.04
-#8.0 GL Output Step = 0.06
-#9.0 GL Output Step = 0.08
-#10.0 GL Output Step = 0.1
-10.0 POV CmdRange = 60.0
-10.0 POV CmdSeq = 123
-10.0 POV CmdAngle = [-45.0 00.0 0.0] deg
-10.0 POV CmdPermute = [0.0 1.0 0.0; 0.0 0.0 1.0; 1.0 0.0 0.0]
-10.0 POV TimeToGo = 60.0
+0.0 Align SC[0].B[0] Primary Vector [0.0 0.0 1.0] with N-frame Vector [0.0 0.0 1.0]
+0.0 Align SC[0].B[0] Secondary Vector [0.0 1.0 0.0] with N-frame Vector [0.0 1.0 0.0]
+0.0 Point SC[0].B[1] Primary Vector [0.0 0.0 1.0] at GroundStation[0]
 
 
 EOF
